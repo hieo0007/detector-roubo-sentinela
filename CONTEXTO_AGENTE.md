@@ -90,17 +90,17 @@ detector_roubo/
 Os testes automatizados com o gabarito oficial (`videos_teste/gabarito.csv`) são executados pelo script unificado `scripts/benchmark.py`, que salva os laudos em `resultados/benchmark_AAAA-MM-DD.json` e `.md`.
 
 * **Data do Último Benchmark:** 2026-11-03
-* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
+* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite (Saída Estruturada JSON)
 * **Total de Vídeos Válidos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
-* **Acurácia Global:** 66,67% (8/12 acertos exatos de classe)
-* **Precisão (Precision):** 62,50%
-* **Sensibilidade (Recall):** 71,43%
+* **Acurácia Global:** 50,00% (6/12 acertos exatos de classe)
+* **Precisão (Precision):** 50,00%
+* **Sensibilidade (Recall):** 42,86%
 * **Erros de Classe (Crime Detectado com Tipo Errado):** 1 (`roubo_mercado_02.mp4`)
 * **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4` e `atividade_normal_balcao_05.mp4`)
-* **Falsos Negativos:** 1 (`roubo_mercado_01.mp4`)
+* **Falsos Negativos:** 3 (`assalto_furto_01.mp4`, `assalto_furto_03.mp4`, `roubo_mercado_01.mp4`)
 * **Falhas de IA (ERRO_IA):** 0
-* **Tempo Médio Total:** 14,90s por vídeo
-* **Tempo Médio da Chamada ao Gemini:** 3,60s por chamada
+* **Tempo Médio Total:** 7,40s por vídeo
+* **Tempo Médio da Chamada ao Gemini:** 2,49s por chamada
 * **Arquivo Fonte:** `resultados/benchmark_2026-11-03.json` e `resultados/benchmark_2026-11-03.md`
 
 Para rodar a bateria oficial de testes:

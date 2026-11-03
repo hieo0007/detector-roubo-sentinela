@@ -148,17 +148,17 @@ print("Laudo:", resultado.descricao_acao)
 Métricas de acurácia e desempenho medidas em execução real contra o gabarito oficial (`videos_teste/gabarito.csv`), com relatório salvo em `resultados/benchmark_2026-11-03.md`:
 
 * **Data do Último Benchmark:** 2026-11-03
-* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
+* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite (Saída Estruturada JSON)
 * **Total de Vídeos Válidos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
-* **Acurácia Global:** 66,67% (8/12 acertos exatos de classe)
-* **Precisão (Precision):** 62,50%
-* **Sensibilidade (Recall):** 71,43%
+* **Acurácia Global:** 50,00% (6/12 acertos exatos de classe)
+* **Precisão (Precision):** 50,00%
+* **Sensibilidade (Recall):** 42,86%
 * **Erros de Classe (Crime Detectado com Tipo Errado):** 1 (`roubo_mercado_02.mp4`)
 * **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4`, `atividade_normal_balcao_05.mp4`)
-* **Falsos Negativos:** 1 (`roubo_mercado_01.mp4`)
+* **Falsos Negativos:** 3 (`assalto_furto_01.mp4`, `assalto_furto_03.mp4`, `roubo_mercado_01.mp4`)
 * **Falhas de IA (ERRO_IA):** 0
-* **Tempo Médio Total por Vídeo:** 14,90s
-* **Tempo Médio da Chamada ao Gemini:** 3,60s
+* **Tempo Médio Total por Vídeo:** 7,40s
+* **Tempo Médio da Chamada ao Gemini:** 2,49s
 
 Para rodar novamente a bateria completa de benchmark e gerar novos relatórios em `resultados/`:
 

@@ -45,7 +45,7 @@ class SecurityAnalyzer:
         self.gesture_engine = None
         self.virtual_fence = VirtualFence(name="Perímetro de Segurança")
         self.shelf_detector = ShelfZoneDetector()
-        self.storyboard_verifier = StoryboardVerifier(self.snapshots_dir)
+        self.storyboard_verifier = StoryboardVerifier(self.snapshots_dir, config_path=self.config_path)
         self.clip_cutter = VideoClipCutter(self.evidencias_dir)
         self.notifier = TelegramNotifier(self.config_path)
 

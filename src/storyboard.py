@@ -16,10 +16,22 @@ class StoryboardVerifier:
     - Compacta em uma unica imagem JPEG ultra-leve (~60 KB).
     - Envia para o Gemini para verificacao semantica em tempo real.
     """
-    def __init__(self, snapshots_dir: str):
+    def __init__(self, snapshots_dir: str, config_path: Optional[str] = None, model_name: Optional[str] = None):
         self.snapshots_dir = snapshots_dir
         self.storyboard_dir = os.path.join(snapshots_dir, "storyboards")
         os.makedirs(self.storyboard_dir, exist_ok=True)
+        self.config_path = config_path or os.path.join(os.path.dirname(snapshots_dir), "config.json")
+        self.model_name = model_name or os.getenv("GEMINI_MODEL") or self._load_model_from_config() or "gemini-3.5-flash-lite"
+
+    def _load_model_from_config(self) -> Optional[str]:
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("gemini_model")
+            except Exception:
+                pass
+        return None
 
     def generate_storyboard(
         self,
@@ -227,52 +239,91 @@ class StoryboardVerifier:
         mode: SecurityMode = SecurityMode.ALL
     ) -> SecurityAnalysisResult:
         """
-        Envia o storyboard para a IA Gemini para verificacao pericial rapida e rigorosa.
+        Envia o storyboard para a IA Gemini para verificacao pericial com saida estruturada JSON.
         Retorna SecurityAnalysisResult com erro=True caso ocorra falha na chamada.
         """
         from google.genai import types
 
         prompt = f"""Você é um perito sênior em segurança patrimonial, prevenção de perdas e análise forense de CFTV.
-Analise com atenção minuciosa aos detalhes a sequência contínua de quadros (storyboard com carimbos de tempo T=Xs).
+Analise com atenção minuciosa aos detalhes a sequência contínua de quadros (storyboard temporal com carimbos de tempo T=Xs).
 
 FOCO PRIORITÁRIO DA CÂMERA: {mode.value}
 
 Categorias de Classificação:
 1. FURTO_LOJA:
-   - Qualquer indivíduo pegando, subtraindo ou manipulando produtos, caixas ou objetos de mesas/prateleiras/expositores e colocando discretamente dentro de mochilas, bolsas pessoais, bolsos traseiros/dianteiros da calça ou sob casacos/jaquetas para ocultar.
-   - Mesmo em ambientes de escritório ou balcão, a subtração de itens para dentro de mochilas/bolsos DEVE ser classificada como FURTO_LOJA (Risco ALERTA_MAXIMO ou SUSPEITO).
-2. INVASAO_PERIMETRO: Indivíduo pulando muro/portão, forçando portas, transitando em calçadas/pátios em área de cerca restrita.
-3. ASSALTO_RENDICAO: Ameaça ostensiva com armas, facas ou agressão, mãos erguidas em rendição, invasão brusca da área do operador do caixa.
-4. NORMAL: Pessoas caminhando pacificamente com mãos visíveis, clientes retirando itens da prateleira e colocando na cesta/carrinho aberto para pagamento, operadores trabalhando rotineiramente sem ocultação de objetos.
+   - Subtração evidente e deliberada de mercadorias expostas, produtos de prateleiras ou balcões comerciais com ocultação em mochilas, bolsas, roupas ou bolsos.
+   - Diferenciação criteriosa: objetos pessoais de uso próprio (como celular, carteira, chaves ou crachá) que o indivíduo retira da mesa ou guarda no próprio bolso NÃO constituem furto, sendo atividade NORMAL.
+   - Quando não houver certeza absoluta de que o item manipulado é mercadoria subtraída, use o nível de risco SUSPEITO.
 
-Regras de Decisão Forense:
-- Observe as mãos e os braços em cada quadro: para onde vai o objeto retirado da mesa/prateleira? Se o objeto sumiu para dentro de uma mochila, casaco ou bolso, é FURTO_LOJA.
-- Independentemente do foco prioritário ({mode.value}), se houver furto evidente ou ocultação de itens, acione FURTO_LOJA imediatamente.
-- Se for atividade regular pacífica de compras ou circulação livre, classifique como NORMAL.
+2. INVASAO_PERIMETRO:
+   - Transposição de barreiras físicas, invasão de áreas restritas sinalizadas ou trânsito não autorizado em perímetros fechados.
 
-Retorne EXCLUSIVAMENTE um objeto JSON válido:
-{{
-  "tipo_evento": "NORMAL" | "FURTO_LOJA" | "INVASAO_PERIMETRO" | "ASSALTO_RENDICAO",
-  "nivel_risco": "NORMAL" | "SUSPEITO" | "ALERTA_MAXIMO",
-  "confianca": 80 a 99,
-  "descricao_acao": "detalhamento pericial preciso da conduta observada nos quadros",
-  "segundo_chave": número em segundos exato do movimento crítico,
-  "itens_envolvidos": ["objeto", "mochila"],
-  "recomendacao_acao": "diretriz imediata de segurança patrimonial"
-}}
+3. ASSALTO_RENDICAO:
+   - Coerção ostensiva, ameaça com armas ou postura prolongada e explícita de rendição forçada com mãos erguidas. Não confunda movimentos rotineiros de alcance a prateleiras com rendição.
+
+4. NORMAL:
+   - Circulação pacífica, pedestres caminhando, clientes retirando produtos e colocando-os em cestas ou carrinhos de compra abertos, funcionários organizando bancadas e pessoas manuseando seus próprios objetos pessoais.
+
+Diretrizes de Decisão Forense:
+- Avalie o contexto: mercadoria subtraída versus posse prévia de item pessoal.
+- Se houver dúvida razoável, classifique como SUSPEITO.
+- Atribua um valor de confiança numérico real de 0.0 a 100.0 que expresse o nível genuíno de certeza diante das evidências observadas.
 """
+        schema = {
+            "type": "OBJECT",
+            "properties": {
+                "tipo_evento": {
+                    "type": "STRING",
+                    "enum": ["NORMAL", "FURTO_LOJA", "INVASAO_PERIMETRO", "ASSALTO_RENDICAO"]
+                },
+                "nivel_risco": {
+                    "type": "STRING",
+                    "enum": ["NORMAL", "SUSPEITO", "ALERTA_MAXIMO"]
+                },
+                "confianca": {
+                    "type": "NUMBER",
+                    "description": "Nível genuíno de confiança de 0.0 a 100.0 refletindo a certeza pericial."
+                },
+                "descricao_acao": {
+                    "type": "STRING",
+                    "description": "Detalhamento pericial contextual preciso da conduta observada nos quadros."
+                },
+                "segundo_chave": {
+                    "type": "NUMBER",
+                    "description": "Segundo exato do vídeo em que ocorre a ação crítica."
+                },
+                "itens_envolvidos": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                    "description": "Itens, bolsas ou objetos identificados."
+                },
+                "recomendacao_acao": {
+                    "type": "STRING",
+                    "description": "Diretriz imediata recomendada de segurança."
+                }
+            },
+            "required": ["tipo_evento", "nivel_risco", "confianca", "descricao_acao", "segundo_chave", "recomendacao_acao"]
+        }
+
+        model_name = self.model_name or "gemini-3.5-flash-lite"
+
         try:
+            config = types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=schema
+            )
             resp = client.models.generate_content(
-                model="gemini-3.5-flash-lite",
+                model=model_name,
                 contents=[
                     types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
                     prompt
-                ]
+                ],
+                config=config
             )
             raw_text = getattr(resp, "text", "") or ""
             return self.parse_ai_response(raw_text, mode=mode)
         except Exception as e:
-            print(f"[STORYBOARD] [ERRO] Falha ao comunicar com IA Gemini: {e}")
+            print(f"[STORYBOARD] [ERRO] Falha ao comunicar com IA Gemini ({model_name}): {e}")
             return SecurityAnalysisResult(
                 evento_detectado=False,
                 modo_analise=mode,
