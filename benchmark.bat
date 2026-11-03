@@ -1,12 +1,12 @@
 @echo off
-title Avaliacao de Deteccao de Roubo - 5 Videos Reais
+title Avaliacao de Desempenho e Acuracia - Sentinela CCTV
 cd /d "%~dp0"
 echo ===================================================
-echo   AVALIANDO OS 5 VIDEOS DE FURTO COM A IA
+echo   AVALIANDO VIDEOS DO GABARITO COM O SENTINELA
 echo ===================================================
 
 set "PYTHON_EXE=python"
 if exist ".venv\Scripts\python.exe" set "PYTHON_EXE=.venv\Scripts\python.exe"
 
-"%PYTHON_EXE%" -m src.benchmark_5_videos
+"%PYTHON_EXE%" scripts\benchmark.py
 pause

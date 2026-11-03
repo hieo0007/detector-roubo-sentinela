@@ -145,20 +145,23 @@ print("Laudo:", resultado.descricao_acao)
 
 ## Benchmarks
 
-Avaliacao de acuracia executada contra banco de dados pericial contendo gravacoes reais de ocorrencias criticas versus circulacao cotidiana de clientes:
+Métricas de acurácia e desempenho medidas em execução real contra o gabarito oficial (`videos_teste/gabarito.csv`), com relatório salvo em `resultados/benchmark_2026-11-03.md`:
 
-| Gravacao de Teste | Cenario Real | Modo | Diagnostico IA | Risco | Confianca | Tempo |
-|---|---|---|---|---|:---:|:---:|
-| `furto_real_mercado_01.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 99% | 1.82s |
-| `furto_real_gondola_02.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.74s |
-| `assalto_furto_02.mp4` | Furto em Mochila | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.91s |
-| `cliente_normal_compras_04.mp4` | Compra Regular | Varejo | `NORMAL` | Normal | 95% | 1.65s |
-| `atividade_normal_balcao_05.mp4` | Trabalho em Balcao | Varejo | `NORMAL` | Normal | 95% | 1.70s |
-| `pedestre_normal_01.mp4` | Transito em Calcada | Geral | `NORMAL` | Normal | 97% | 1.58s |
+* **Data do Último Benchmark:** 2026-11-03
+* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
+* **Total de Vídeos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
+* **Acurácia Global:** 66,67% (8/12 acertos)
+* **Precisão (Precision):** 71,43%
+* **Sensibilidade (Recall):** 71,43%
+* **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4`, `atividade_normal_balcao_05.mp4`)
+* **Falsos Negativos:** 2 (`assalto_furto_01.mp4` por contingência local, `roubo_mercado_01.mp4`)
+* **Tempo Médio de Resposta por Vídeo:** 17,98s
 
-* **Sensibilidade (True Positive Rate):** 100%
-* **Taxa de Falsos Positivos em Compras Normais:** 0%
-* **Tempo Medio de Resposta da Analise Multimodal:** 1.73s
+Para rodar novamente a bateria completa de benchmark e gerar novos relatórios em `resultados/`:
+
+```bash
+python scripts/benchmark.py
+```
 
 ---
 

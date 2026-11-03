@@ -1,0 +1,13 @@
+arquivo,esperado,origem
+pedestre_normal_01.mp4,NORMAL,Banco CFTV - Transito livre de pedestres
+pedestre_normal_02.mp4,NORMAL,Banco CFTV - Cliente circulando com maos visiveis
+pedestre_normal_03.mp4,NORMAL,Banco CFTV - Movimentacao regular de pedestres
+cliente_normal_compras_04.mp4,NORMAL,Cenario teste - Cliente colocando produto no carrinho
+atividade_normal_balcao_05.mp4,NORMAL,Cenario teste - Funcionario arrumando prateleira e guardando celular no bolso
+assalto_furto_01.mp4,FURTO_LOJA,CCTV Real - Subtracao de mercadoria em prateleira
+assalto_furto_02.mp4,FURTO_LOJA,CCTV Real - Ocultacao de produto sob jaqueta
+assalto_furto_03.mp4,FURTO_LOJA,CCTV Real - Furto de item e evasao do corredor
+furto_real_mercado_01.mp4,FURTO_LOJA,CCTV Real - Furto de produto em supermercado
+furto_real_gondola_02.mp4,FURTO_LOJA,CCTV Real - Furto em gondola comercial
+roubo_mercado_01.mp4,FURTO_LOJA,CCTV Real - Subtracao em prateleira comercial
+roubo_mercado_02.mp4,FURTO_LOJA,CCTV Real - Subtracao rapida em balcao

@@ -1,7 +1,7 @@
 # CONTEXTO DE ENGENHARIA PARA AGENTES E DESENVOLVEDORES (HANDOFF)
 > **Data do Handoff:** Novembro de 2026  
 > **Sistema:** Sentinela CCTV AI — Monitoramento Inteligente e Prevenção de Perdas (v2.4)  
-> **Status Operacional:** Estável, Homologado e Testado em Benchmark Real
+> **Status Operacional:** Estável e Coberto por Testes Automatizados (pytest)
 
 Este documento foi elaborado para que **qualquer outro agente autônomo (Claude Code, Antigravity, Codex)** ou engenheiro de software **sem nenhum contexto prévio** possa compreender imediatamente a arquitetura, o estado atual do projeto, os testes executados, a estrutura de código e como continuar o desenvolvimento sem retrabalho.
 
@@ -87,18 +87,23 @@ detector_roubo/
 
 ## 5. Resultados de Benchmarks e Testes Realizados
 
-Todos os vídeos abaixo foram submetidos ao pipeline completo de detecção e análise com a IA Gemini 3.5 Flash Lite em modo Varejo / Geral:
+Os testes automatizados com o gabarito oficial (`videos_teste/gabarito.csv`) são executados pelo script unificado `scripts/benchmark.py`, que salva os laudos em `resultados/benchmark_AAAA-MM-DD.json` e `.md`.
 
-| Arquivo de Teste | Natureza Real | Modo Testado | Classificação da IA | Nível de Risco | Confiança | Diagnóstico Pericial |
-| :--- | :--- | :--- | :--- | :--- | :---: | :--- |
-| `furto_real_mercado_01.mp4` | **Furto Real** | Varejo | `FURTO_LOJA` | `ALERTA_MAXIMO` | 99% | Indivíduo manipula caixa de produto e oculta sob jaqueta/bolso antes de se afastar (T=12.0s). |
-| `furto_real_gondola_02.mp4` | **Furto Real** | Varejo | `FURTO_LOJA` | `ALERTA_MAXIMO` | 98% | Indivíduo introduz braço pela janela e subtrai bolsa sobre o console (T=4.4s). |
-| `assalto_furto_02.mp4` | **Furto (Mochila)** | Varejo | `FURTO_LOJA` | `ALERTA_MAXIMO` | 98% | Subtração deliberada e contínua de caixas/itens para dentro de mochila pessoal (T=7.5s). |
-| `cliente_normal_compras_04.mp4` | **Normal** | Varejo | `NORMAL` | `NORMAL` | 95% | Cliente transita pacificamente pela loja segurando produto à mostra, sem ocultação, caixa em operação. |
-| `atividade_normal_balcao_05.mp4` | **Normal** | Varejo | `NORMAL` | `NORMAL` | 95% | Operador atuando normalmente no balcão sem colocação em bolsos ou mochilas. |
-| `pedestre_normal_01.mp4` | **Normal** | Geral | `NORMAL` | `NORMAL` | 97% | Trânsito pacífico de pedestres na calçada com mãos livres, sem invasão ou loitering. |
+* **Data do Último Benchmark:** 2026-11-03
+* **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
+* **Total de Vídeos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
+* **Acurácia Global:** 66,67% (8/12 acertos)
+* **Precisão (Precision):** 71,43%
+* **Sensibilidade (Recall):** 71,43%
+* **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4` e `atividade_normal_balcao_05.mp4`)
+* **Falsos Negativos:** 2 (`assalto_furto_01.mp4` por contingência local, `roubo_mercado_01.mp4`)
+* **Tempo Médio de Análise:** 17,98s por vídeo
+* **Arquivo Fonte:** `resultados/benchmark_2026-11-03.json` e `resultados/benchmark_2026-11-03.md`
 
-*Assertividade nos testes comparativos: 100% de acerto, sem falsos positivos em compras normais e com tempo médio de resposta de 1.8 segundos.*
+Para rodar a bateria oficial de testes:
+```bash
+python scripts/benchmark.py
+```
 
 ---
 

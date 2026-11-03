@@ -5,10 +5,9 @@ __pycache__/
 env/
 node_modules/
 temp/
-evidencias/*.mp4
-videos_teste/*.mp4
-videos_teste/
 evidencias/
+videos_teste/*
+!videos_teste/gabarito.csv
 snapshots/
 config.json
 *.pt
