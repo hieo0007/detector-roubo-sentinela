@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+env/
+node_modules/
+temp/
+evidencias/*.mp4
+videos_teste/*.mp4
+videos_teste/
+evidencias/
+snapshots/
+config.json
+*.pt

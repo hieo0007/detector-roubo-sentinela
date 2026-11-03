@@ -1,0 +1,28 @@
+{
+  "camera": {
+    "source": 0,
+    "fps": 20,
+    "resolution": [
+      1280,
+      720
+    ],
+    "comment_source": "0 para webcam USB integrada, ou URL RTSP/HTTP (ex: 'rtsp://usuario:senha@ip:554/stream' ou 'http://192.168.1.X:8080/video')"
+  },
+  "motion_filter": {
+    "enabled": true,
+    "min_area": 800,
+    "cooldown_seconds": 1.5
+  },
+  "buffer": {
+    "clip_duration_seconds": 4,
+    "overlap_seconds": 1
+  },
+  "detection": {
+    "min_confidence_alert": 70,
+    "save_evidence": true,
+    "play_sound_alert": true
+  },
+  "gemini_api_key": "SUA_CHAVE_GEMINI_AQUI",
+  "telegram_bot_token": "",
+  "telegram_chat_id": ""
+}
