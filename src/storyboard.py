@@ -236,15 +236,49 @@ class StoryboardVerifier:
         self,
         client: Any,
         img_bytes: bytes,
-        mode: SecurityMode = SecurityMode.ALL
+        mode: SecurityMode = SecurityMode.ALL,
+        prompt_version: str = "v3"
     ) -> SecurityAnalysisResult:
         """
-        Envia o storyboard para a IA Gemini para verificacao pericial com saida estruturada JSON.
-        Retorna SecurityAnalysisResult com erro=True caso ocorra falha na chamada.
+        Envia o storyboard para a IA Gemini para verificacao pericial.
+        Suporta prompt_version='v3' (saida estruturada JSON com schema)
+        ou prompt_version='legacy'/'antigo' (prompt original da Etapa 2).
         """
         from google.genai import types
 
-        prompt = f"""Você é um perito sênior em segurança patrimonial, prevenção de perdas e análise forense de CFTV.
+        if prompt_version in ["legacy", "antigo"]:
+            prompt = f"""Você é um perito sênior em segurança patrimonial, prevenção de perdas e análise forense de CFTV.
+Analise com atenção minuciosa aos detalhes a sequência contínua de quadros (storyboard com carimbos de tempo T=Xs).
+
+FOCO PRIORITÁRIO DA CÂMERA: {mode.value}
+
+Categorias de Classificação:
+1. FURTO_LOJA:
+   - Qualquer indivíduo pegando, subtraindo ou manipulando produtos, caixas ou objetos de mesas/prateleiras/expositores e colocando discretamente dentro de mochilas, bolsas pessoais, bolsos traseiros/dianteiros da calça ou sob casacos/jaquetas para ocultar.
+   - Mesmo em ambientes de escritório ou balcão, a subtração de itens para dentro de mochilas/bolsos DEVE ser classificada como FURTO_LOJA (Risco ALERTA_MAXIMO ou SUSPEITO).
+2. INVASAO_PERIMETRO: Indivíduo pulando muro/portão, forçando portas, transitando em calçadas/pátios em área de cerca restrita.
+3. ASSALTO_RENDICAO: Ameaça ostensiva com armas, facas ou agressão, mãos erguidas em rendição, invasão brusca da área do operador do caixa.
+4. NORMAL: Pessoas caminhando pacificamente com mãos visíveis, clientes retirando itens da prateleira e colocando na cesta/carrinho aberto para pagamento, operadores trabalhando rotineiramente sem ocultação de objetos.
+
+Regras de Decisão Forense:
+- Observe as mãos e os braços em cada quadro: para onde vai o objeto retirado da mesa/prateleira? Se o objeto sumiu para dentro de uma mochila, casaco ou bolso, é FURTO_LOJA.
+- Independentemente do foco prioritário ({mode.value}), se houver furto evidente ou ocultação de itens, acione FURTO_LOJA imediatamente.
+- Se for atividade regular pacífica de compras ou circulação livre, classifique como NORMAL.
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido:
+{{
+  "tipo_evento": "NORMAL" | "FURTO_LOJA" | "INVASAO_PERIMETRO" | "ASSALTO_RENDICAO",
+  "nivel_risco": "NORMAL" | "SUSPEITO" | "ALERTA_MAXIMO",
+  "confianca": 80 a 99,
+  "descricao_acao": "detalhamento pericial preciso da conduta observada nos quadros",
+  "segundo_chave": número em segundos exato do movimento crítico,
+  "itens_envolvidos": ["objeto", "mochila"],
+  "recomendacao_acao": "diretriz imediata de segurança patrimonial"
+}}
+"""
+            config = None
+        else:
+            prompt = f"""Você é um perito sênior em segurança patrimonial, prevenção de perdas e análise forense de CFTV.
 Analise com atenção minuciosa aos detalhes a sequência contínua de quadros (storyboard temporal com carimbos de tempo T=Xs).
 
 FOCO PRIORITÁRIO DA CÂMERA: {mode.value}
@@ -269,57 +303,66 @@ Diretrizes de Decisão Forense:
 - Se houver dúvida razoável, classifique como SUSPEITO.
 - Atribua um valor de confiança numérico real de 0.0 a 100.0 que expresse o nível genuíno de certeza diante das evidências observadas.
 """
-        schema = {
-            "type": "OBJECT",
-            "properties": {
-                "tipo_evento": {
-                    "type": "STRING",
-                    "enum": ["NORMAL", "FURTO_LOJA", "INVASAO_PERIMETRO", "ASSALTO_RENDICAO"]
+            schema = {
+                "type": "OBJECT",
+                "properties": {
+                    "tipo_evento": {
+                        "type": "STRING",
+                        "enum": ["NORMAL", "FURTO_LOJA", "INVASAO_PERIMETRO", "ASSALTO_RENDICAO"]
+                    },
+                    "nivel_risco": {
+                        "type": "STRING",
+                        "enum": ["NORMAL", "SUSPEITO", "ALERTA_MAXIMO"]
+                    },
+                    "confianca": {
+                        "type": "NUMBER",
+                        "description": "Nível genuíno de confiança de 0.0 a 100.0 refletindo a certeza pericial."
+                    },
+                    "descricao_acao": {
+                        "type": "STRING",
+                        "description": "Detalhamento pericial contextual preciso da conduta observada nos quadros."
+                    },
+                    "segundo_chave": {
+                        "type": "NUMBER",
+                        "description": "Segundo exato do vídeo em que ocorre a ação crítica."
+                    },
+                    "itens_envolvidos": {
+                        "type": "ARRAY",
+                        "items": {"type": "STRING"},
+                        "description": "Itens, bolsas ou objetos identificados."
+                    },
+                    "recomendacao_acao": {
+                        "type": "STRING",
+                        "description": "Diretriz imediata recomendada de segurança."
+                    }
                 },
-                "nivel_risco": {
-                    "type": "STRING",
-                    "enum": ["NORMAL", "SUSPEITO", "ALERTA_MAXIMO"]
-                },
-                "confianca": {
-                    "type": "NUMBER",
-                    "description": "Nível genuíno de confiança de 0.0 a 100.0 refletindo a certeza pericial."
-                },
-                "descricao_acao": {
-                    "type": "STRING",
-                    "description": "Detalhamento pericial contextual preciso da conduta observada nos quadros."
-                },
-                "segundo_chave": {
-                    "type": "NUMBER",
-                    "description": "Segundo exato do vídeo em que ocorre a ação crítica."
-                },
-                "itens_envolvidos": {
-                    "type": "ARRAY",
-                    "items": {"type": "STRING"},
-                    "description": "Itens, bolsas ou objetos identificados."
-                },
-                "recomendacao_acao": {
-                    "type": "STRING",
-                    "description": "Diretriz imediata recomendada de segurança."
-                }
-            },
-            "required": ["tipo_evento", "nivel_risco", "confianca", "descricao_acao", "segundo_chave", "recomendacao_acao"]
-        }
-
-        model_name = self.model_name or "gemini-3.5-flash-lite"
-
-        try:
+                "required": ["tipo_evento", "nivel_risco", "confianca", "descricao_acao", "segundo_chave", "recomendacao_acao"]
+            }
             config = types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=schema
             )
-            resp = client.models.generate_content(
-                model=model_name,
-                contents=[
-                    types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
-                    prompt
-                ],
-                config=config
-            )
+
+        model_name = self.model_name or "gemini-3.5-flash-lite"
+
+        try:
+            if config:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
+                        prompt
+                    ],
+                    config=config
+                )
+            else:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
+                        prompt
+                    ]
+                )
             raw_text = getattr(resp, "text", "") or ""
             return self.parse_ai_response(raw_text, mode=mode)
         except Exception as e:

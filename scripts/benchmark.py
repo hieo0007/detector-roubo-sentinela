@@ -3,6 +3,7 @@ import sys
 import csv
 import json
 import time
+import argparse
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -18,7 +19,9 @@ from src.models import RiskLevel, EventType
 def run_benchmark(
     gabarito_path: str = "videos_teste/gabarito.csv",
     output_dir: str = "resultados",
-    max_videos: int = None
+    max_videos: int = None,
+    tag: str = "benchmark",
+    prompt_version: str = "v3"
 ) -> Dict[str, Any]:
     abs_gabarito = os.path.join(base_dir, gabarito_path) if not os.path.isabs(gabarito_path) else gabarito_path
     abs_output = os.path.join(base_dir, output_dir) if not os.path.isabs(output_dir) else output_dir
@@ -36,11 +39,11 @@ def run_benchmark(
         rows = rows[:max_videos]
 
     analyzer = SecurityAnalyzer()
-    model_version = "YOLOv8n + Gemini 3.5 Flash Lite"
+    model_version = f"YOLOv8n + Gemini 3.5 Flash Lite (prompt: {prompt_version})"
 
     print("\n" + "="*80)
     print(f"  BENCHMARK SENTINELA - EXECUCAO EM CENARIOS DE TESTE")
-    print(f"  Modelo: {model_version} | Gabarito: {os.path.basename(abs_gabarito)}")
+    print(f"  Modelo: {model_version} | Tag: {tag} | Gabarito: {os.path.basename(abs_gabarito)}")
     print("="*80 + "\n")
 
     results: List[Dict[str, Any]] = []
@@ -75,7 +78,7 @@ def run_benchmark(
         for attempt in range(1, max_attempts + 1):
             t0 = time.time()
             try:
-                report = analyzer.analyze_clip(video_path)
+                report = analyzer.analyze_clip(video_path, prompt_version=prompt_version)
                 elapsed_total = round(time.time() - t0, 2)
             except Exception as e:
                 elapsed_total = round(time.time() - t0, 2)
@@ -177,8 +180,15 @@ def run_benchmark(
     avg_total_time = round(sum(tempos_totais) / len(tempos_totais), 2) if tempos_totais else 0.0
     avg_gemini_time = round(sum(tempos_gemini) / len(tempos_gemini), 2) if tempos_gemini else 0.0
 
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now()
+    today_str = now.strftime("%Y-%m-%d")
+    timestamp_str = now.strftime("%Y-%m-%d_%H%M")
+    file_prefix = f"benchmark_{timestamp_str}_{tag}"
+
     output_data = {
+        "timestamp": timestamp_str,
+        "tag": tag,
+        "versao_prompt": prompt_version,
         "data_execucao": today_str,
         "versao_modelo": model_version,
         "total_videos_processados": len(results),
@@ -198,16 +208,18 @@ def run_benchmark(
         "resultados": results
     }
 
-    # Salva JSON
-    json_path = os.path.join(abs_output, f"benchmark_{today_str}.json")
+    # Salva JSON com nome unico contendo data, hora e rotulo/tag
+    json_path = os.path.join(abs_output, f"{file_prefix}.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    # Salva Markdown
-    md_path = os.path.join(abs_output, f"benchmark_{today_str}.md")
+    # Salva Markdown com nome unico contendo data, hora e rotulo/tag
+    md_path = os.path.join(abs_output, f"{file_prefix}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(f"# Relatório de Benchmark - Sentinela CCTV\n\n")
-        f.write(f"- **Data de Execução**: {today_str}\n")
+        f.write(f"- **Data de Execução**: {timestamp_str}\n")
+        f.write(f"- **Rótulo / Tag**: `{tag}`\n")
+        f.write(f"- **Versão do Prompt**: `{prompt_version}`\n")
         f.write(f"- **Versão do Modelo**: {model_version}\n")
         f.write(f"- **Total de Vídeos Válidos Avaliados**: {total_valid}\n")
         f.write(f"- **Erros de Comunicação / API (ERRO_IA)**: {len(erros_ia_list)} (excluídos das métricas de acurácia)\n")
@@ -229,6 +241,8 @@ def run_benchmark(
     print("\n" + "="*80)
     print("  RESUMO CONSOLIDADO DO BENCHMARK")
     print("="*80)
+    print(f"Tag / Rotulo            : {tag}")
+    print(f"Versao do Prompt        : {prompt_version}")
     print(f"Total de Videos Validos : {total_valid}")
     print(f"Falhas na IA (ERRO_IA)  : {len(erros_ia_list)}")
     print(f"Acertos Totais          : {acertos} ({accuracy}%)")
@@ -248,7 +262,19 @@ def run_benchmark(
 
 
 if __name__ == "__main__":
-    max_v = None
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        max_v = int(sys.argv[1])
-    run_benchmark(max_videos=max_v)
+    parser = argparse.ArgumentParser(description="Benchmark Sentinela CCTV")
+    parser.add_argument("--gabarito", type=str, default="videos_teste/gabarito.csv", help="Caminho do CSV de gabarito")
+    parser.add_argument("--tag", type=str, default="benchmark", help="Rotulo identificador da rodada")
+    parser.add_argument("--prompt-version", "--prompt_version", type=str, default="v3", choices=["v3", "novo", "legacy", "antigo"], help="Versao do prompt (v3/novo ou legacy/antigo)")
+    parser.add_argument("--max-videos", "--max_videos", type=int, default=None, help="Limite maximo de videos a processar")
+    parser.add_argument("legacy_max_videos", nargs="?", type=int, default=None, help="Argumento posicional retrocompativel para max_videos")
+
+    args = parser.parse_args()
+    limit = args.max_videos if args.max_videos is not None else args.legacy_max_videos
+
+    run_benchmark(
+        gabarito_path=args.gabarito,
+        max_videos=limit,
+        tag=args.tag,
+        prompt_version=args.prompt_version
+    )

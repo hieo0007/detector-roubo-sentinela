@@ -121,7 +121,8 @@ class SecurityAnalyzer:
         mode: SecurityMode = SecurityMode.ALL,
         fence_points: Optional[List[Tuple[float, float]]] = None,
         shelf_zones: Optional[List[List[Tuple[float, float]]]] = None,
-        progress_callback: Optional[Callable[[float, int, int, str], None]] = None
+        progress_callback: Optional[Callable[[float, int, int, str], None]] = None,
+        prompt_version: str = "v3"
     ) -> SecurityAnalysisResult:
         """
         Executa o pipeline inteligente completo:
@@ -261,7 +262,7 @@ class SecurityAnalyzer:
         if self.client and img_bytes:
             update_progress(75.0, total_frames, total_frames, "Consultando verificador analítico...")
             t_ai_start = time.time()
-            ai_result = self.storyboard_verifier.verify_with_ai(self.client, img_bytes, mode=mode)
+            ai_result = self.storyboard_verifier.verify_with_ai(self.client, img_bytes, mode=mode, prompt_version=prompt_version)
             ai_result.tempo_ia_segundos = round(time.time() - t_ai_start, 2)
             ai_result.storyboard_url = storyboard_rel_url
 
