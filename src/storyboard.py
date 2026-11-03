@@ -12,9 +12,9 @@ from .models import SecurityMode, EventType, RiskLevel, SecurityAnalysisResult
 class StoryboardVerifier:
     """
     Gerador e Verificador de Storyboards Temporais Compactos:
-    - Extrai 4 a 6 quadros-chave em sequência contínua com carimbos de tempo.
-    - Compacta em uma única imagem JPEG ultra-leve (~60 KB).
-    - Envia para o Gemini 3.5 Flash Lite para verificação semântica em tempo real (< 2 segundos).
+    - Extrai 4 a 6 quadros-chave em sequencia continua com carimbos de tempo.
+    - Compacta em uma unica imagem JPEG ultra-leve (~60 KB).
+    - Envia para o Gemini para verificacao semantica em tempo real.
     """
     def __init__(self, snapshots_dir: str):
         self.snapshots_dir = snapshots_dir
@@ -30,7 +30,7 @@ class StoryboardVerifier:
         output_filename: Optional[str] = None
     ) -> Tuple[Optional[bytes], Optional[str]]:
         """
-        Gera uma tira horizontal de quadros-chave do vídeo com carimbos de tempo legíveis.
+        Gera uma tira horizontal de quadros-chave do video com carimbos de tempo legiveis.
         Retorna (bytes_jpeg, caminho_arquivo_salvo).
         """
         if not os.path.exists(video_path):
@@ -41,7 +41,7 @@ class StoryboardVerifier:
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
         duration = total_frames / fps
 
-        # Determina os índices de quadros a extrair
+        # Determina os indices de quadros a extrair
         if target_sec is not None and target_sec > 0:
             start_sec = max(0.0, target_sec - (window_sec / 2.0))
             end_sec = min(duration, target_sec + (window_sec / 2.0))
@@ -56,7 +56,7 @@ class StoryboardVerifier:
             cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
             ret, frame = cap.read()
             if ret:
-                # Resolução ampliada (480x270) para máxima nitidez visual de mãos e objetos
+                # Resolucao ampliada (480x270) para nitidez visual de maos e objetos
                 frame_resized = cv2.resize(frame, (480, 270))
                 sec = round(idx / fps, 1)
 
@@ -79,7 +79,7 @@ class StoryboardVerifier:
         if not frames:
             return None, None
 
-        # Concatena os quadros horizontalmente em uma única tira cronológica
+        # Concatena os quadros horizontalmente em uma unica tira cronologica
         storyboard_img = np.hstack(frames)
         pil_img = Image.fromarray(storyboard_img)
 
@@ -95,6 +95,131 @@ class StoryboardVerifier:
         pil_img.save(buf, format="JPEG", quality=88)
         return buf.getvalue(), save_path
 
+    def parse_ai_response(self, raw_text: str, mode: SecurityMode = SecurityMode.ALL) -> SecurityAnalysisResult:
+        """
+        Valida e desserializa o JSON retornado pela IA usando Pydantic.
+        Trata respostas invalidas, campos faltantes ou markdown quebrado como ERRO_ANALISE.
+        """
+        if not raw_text or not raw_text.strip():
+            return SecurityAnalysisResult(
+                evento_detectado=False,
+                modo_analise=mode,
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao="A IA retornou uma resposta vazia.",
+                recomendacao_acao="Verificar o modelo ou repetir o processamento.",
+                erro=True,
+                erro_detalhe="Resposta da IA vazia",
+                ia_respondeu=False
+            )
+
+        clean_json = re.sub(r"^```(?:json)?\s*", "", raw_text.strip(), flags=re.MULTILINE)
+        clean_json = re.sub(r"\s*```$", "", clean_json, flags=re.MULTILINE).strip()
+
+        try:
+            data = json.loads(clean_json)
+            if not isinstance(data, dict):
+                raise ValueError("O conteudo JSON retornado nao e um objeto.")
+        except Exception as e:
+            return SecurityAnalysisResult(
+                evento_detectado=False,
+                modo_analise=mode,
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao=f"Formato JSON invalido retornado pela IA: {e}",
+                recomendacao_acao="Verificar a saida gerada pelo modelo.",
+                erro=True,
+                erro_detalhe=f"Erro ao decodificar JSON: {e}",
+                ia_respondeu=False
+            )
+
+        # Validacao estrita dos campos com enums
+        t_evento_str = data.get("tipo_evento")
+        if not t_evento_str or t_evento_str not in [e.value for e in EventType if e != EventType.ERRO_ANALISE]:
+            return SecurityAnalysisResult(
+                evento_detectado=False,
+                modo_analise=mode,
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao=f"Campo 'tipo_evento' ausente ou invalido: '{t_evento_str}'",
+                recomendacao_acao="Verificar a consistencia do schema de resposta.",
+                erro=True,
+                erro_detalhe=f"Tipo de evento invalido: {t_evento_str}",
+                ia_respondeu=False
+            )
+
+        tipo_evento = EventType(t_evento_str)
+
+        n_risco_str = data.get("nivel_risco")
+        if not n_risco_str or n_risco_str not in [r.value for r in RiskLevel]:
+            return SecurityAnalysisResult(
+                evento_detectado=False,
+                modo_analise=mode,
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao=f"Campo 'nivel_risco' ausente ou invalido: '{n_risco_str}'",
+                recomendacao_acao="Verificar a consistencia do schema de resposta.",
+                erro=True,
+                erro_detalhe=f"Nivel de risco invalido: {n_risco_str}",
+                ia_respondeu=False
+            )
+
+        nivel_risco = RiskLevel(n_risco_str)
+
+        try:
+            confianca_val = float(data.get("confianca", 80.0))
+            confianca_val = max(0.0, min(100.0, confianca_val))
+        except (ValueError, TypeError):
+            confianca_val = 50.0
+
+        try:
+            ts_sec = float(data.get("segundo_chave", 0.0))
+        except (ValueError, TypeError):
+            ts_sec = 0.0
+
+        descricao = str(data.get("descricao_acao", "")).strip()
+        if not descricao:
+            descricao = "Analise pericial estruturada realizada pela IA."
+
+        recomendacao = str(data.get("recomendacao_acao", "Verificar gravacao do setor.")).strip()
+
+        itens = data.get("itens_envolvidos", [])
+        if not isinstance(itens, list):
+            itens = [str(itens)]
+
+        # Validacao com Pydantic
+        try:
+            return SecurityAnalysisResult(
+                evento_detectado=(tipo_evento != EventType.NORMAL),
+                modo_analise=mode,
+                tipo_evento=tipo_evento,
+                nivel_risco=nivel_risco,
+                confianca=confianca_val,
+                descricao_acao=descricao,
+                timestamp_segundo=ts_sec,
+                itens_envolvidos=[str(i) for i in itens],
+                recomendacao_acao=recomendacao,
+                erro=False,
+                ia_respondeu=True
+            )
+        except Exception as e:
+            return SecurityAnalysisResult(
+                evento_detectado=False,
+                modo_analise=mode,
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao=f"Falha de validacao Pydantic no resultado: {e}",
+                recomendacao_acao="Verificar estrutura de dados interna.",
+                erro=True,
+                erro_detalhe=str(e),
+                ia_respondeu=False
+            )
+
     def verify_with_ai(
         self,
         client: Any,
@@ -102,7 +227,8 @@ class StoryboardVerifier:
         mode: SecurityMode = SecurityMode.ALL
     ) -> SecurityAnalysisResult:
         """
-        Envia o storyboard para a IA Gemini 3.5 Flash Lite para verificação pericial rápida e rigorosa.
+        Envia o storyboard para a IA Gemini para verificacao pericial rapida e rigorosa.
+        Retorna SecurityAnalysisResult com erro=True caso ocorra falha na chamada.
         """
         from google.genai import types
 
@@ -131,7 +257,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido:
   "confianca": 80 a 99,
   "descricao_acao": "detalhamento pericial preciso da conduta observada nos quadros",
   "segundo_chave": número em segundos exato do movimento crítico,
-  "itens_envolvidos": ["objeto", "mochila", etc],
+  "itens_envolvidos": ["objeto", "mochila"],
   "recomendacao_acao": "diretriz imediata de segurança patrimonial"
 }}
 """
@@ -143,47 +269,19 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido:
                     prompt
                 ]
             )
-
-            raw_text = resp.text.strip()
-            # Remove blocos markdown de json se houver
-            clean_json = re.sub(r"^```(?:json)?\s*", "", raw_text, flags=re.MULTILINE)
-            clean_json = re.sub(r"\s*```$", "", clean_json, flags=re.MULTILINE).strip()
-
-            data = json.loads(clean_json)
-
-            t_evento_str = data.get("tipo_evento", "NORMAL")
-            try:
-                tipo_evento = EventType(t_evento_str)
-            except Exception:
-                tipo_evento = EventType.NORMAL
-
-            n_risco_str = data.get("nivel_risco", "NORMAL")
-            try:
-                nivel_risco = RiskLevel(n_risco_str)
-            except Exception:
-                nivel_risco = RiskLevel.NORMAL if tipo_evento == EventType.NORMAL else RiskLevel.ALERTA_MAXIMO
-
-            evento_detectado = tipo_evento != EventType.NORMAL
-
-            return SecurityAnalysisResult(
-                evento_detectado=evento_detectado,
-                modo_analise=mode,
-                tipo_evento=tipo_evento,
-                nivel_risco=nivel_risco,
-                confianca=float(data.get("confianca", 85.0)),
-                descricao_acao=str(data.get("descricao_acao", "Análise realizada pela IA")),
-                timestamp_segundo=float(data.get("segundo_chave", 0.0)),
-                itens_envolvidos=list(data.get("itens_envolvidos", [])),
-                recomendacao_acao=str(data.get("recomendacao_acao", "Verificar câmeras do setor."))
-            )
+            raw_text = getattr(resp, "text", "") or ""
+            return self.parse_ai_response(raw_text, mode=mode)
         except Exception as e:
-            print(f"[STORYBOARD] Erro ao chamar IA: {e}")
+            print(f"[STORYBOARD] [ERRO] Falha ao comunicar com IA Gemini: {e}")
             return SecurityAnalysisResult(
                 evento_detectado=False,
                 modo_analise=mode,
-                tipo_evento=EventType.NORMAL,
-                nivel_risco=RiskLevel.NORMAL,
-                confianca=50.0,
-                descricao_acao=f"Falha na comunicação com IA: {e}",
-                recomendacao_acao="Verificar conexão com a internet."
+                tipo_evento=EventType.ERRO_ANALISE,
+                nivel_risco=RiskLevel.SUSPEITO,
+                confianca=0.0,
+                descricao_acao=f"Falha na comunicação com IA Gemini: {e}",
+                recomendacao_acao="Verificar conexão com a internet ou chave de API.",
+                erro=True,
+                erro_detalhe=str(e),
+                ia_respondeu=False
             )

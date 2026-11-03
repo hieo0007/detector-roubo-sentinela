@@ -17,7 +17,7 @@ O **Sentinela CCTV** é uma plataforma de monitoramento de segurança eletrônic
 3. **Reprodução Falha em Navegadores:** Gravações de CFTV em codecs brutos (como `mp4v` do OpenCV) travam em tela preta (0:00) nos navegadores modernos.
 
 ### A Solução Implementada (Arquitetura Híbrida Edge + Nuvem):
-* **No Edge (Local a 30 FPS):** Rastreamento de pessoas com **YOLOv8 + ByteTrack**, estimativa de pose anatômica (mãos, ombros, quadris) e polígonos vetoriais de cerca virtual e prateleiras.
+* **No Edge (Amostragem a cada 0.5s):** Rastreamento de pessoas com **YOLOv8 + ByteTrack**, estimativa de pose anatômica (mãos, ombros, quadris) e polígonos vetoriais de cerca virtual e prateleiras.
 * **Na Nuvem (Verificação em < 2 segundos):** Quando um padrão de interesse ocorre, o sistema gera um **Storyboard Forense Temporal** (tira JPEG horizontal ultra-leve de 6 quadros em 480x270 com carimbos `T=Xs`, ~60 KB) e envia ao **Google Gemini 3.5 Flash Lite**. A IA analisa a intencionalidade da ação e retorna o diagnóstico com precisão cirúrgica.
 * **Custódia Forense Imediata:** Clipes de evidência cortados automaticamente (pré e pós-ocorrência) transcodificados para **H.264 (avc1) web-ready com faststart**, permitindo streaming com suporte a HTTP 206 (Range requests).
 

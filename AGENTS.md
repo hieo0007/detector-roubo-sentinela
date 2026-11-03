@@ -8,7 +8,7 @@ This document provides system context, architecture boundaries, execution guidel
 
 Sentinela is a production-grade CCTV loss prevention and security monitoring platform. It solves the high-false-positive problem of traditional edge motion systems and the latency bottleneck of full-video cloud analysis through a hybrid architecture:
 
-* **Edge Layer (Local 30 FPS):** Continuous object detection (YOLOv8), multi-object tracking (ByteTrack), pose estimation (YOLOv8-Pose), and ray-casting geometric fence intrusion.
+* **Edge Layer (Local Sampling):** Frame sampling every 0.5s of recorded video (2 fps) for continuous object detection (YOLOv8), multi-object tracking (ByteTrack), pose estimation (YOLOv8-Pose), and ray-casting geometric fence intrusion.
 * **Cloud Multimodal Layer (<2.0s):** Event-triggered temporal storyboard extraction (6 keyframes @ 480x270 with timestamp metadata, ~60 KB JPEG) verified against Google Gemini 3.5 Flash Lite using loss-prevention forensic prompts.
 * **Evidence Custody Layer:** Immediate incident clipping, automated faststart H.264 transcoding via imageio-ffmpeg, and HTTP 206 range-request streaming.
 

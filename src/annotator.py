@@ -60,7 +60,10 @@ class VideoAnnotator:
 
         theft_sec = float(report_data.get("timestamp_segundo") or 0.0)
         nivel_risco = report_data.get("nivel_risco", "NORMAL")
-        is_theft = nivel_risco in ["ROUBO_CONFIRMADO", "SUSPEITO"]
+        if hasattr(nivel_risco, "value"):
+            nivel_risco = nivel_risco.value
+        evento_detectado = bool(report_data.get("evento_detectado", False))
+        is_theft = evento_detectado or (str(nivel_risco).upper() in ["ALERTA_MAXIMO", "SUSPEITO"])
         action_desc = report_data.get("descricao_acao", "")
 
         # Determina os marcos temporais cronológicos

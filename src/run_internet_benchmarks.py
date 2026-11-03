@@ -6,9 +6,9 @@ import time
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 
-from src.analyzer import TheftAnalyzer
+from src.analyzer import SecurityAnalyzer
 
-analyzer = TheftAnalyzer()
+analyzer = SecurityAnalyzer()
 
 test_cases = [
     # Categoria 1: Pessoas Andando / Circulação Normal
@@ -30,17 +30,17 @@ test_cases = [
     # Categoria 2: Assalto e Furto Real
     {
         "filename": "assalto_furto_01.mp4",
-        "expected": "ROUBO",
+        "expected": "FURTO_LOJA",
         "label": "Furto Real de Mercadoria em Prateleira (CCTV 04)"
     },
     {
         "filename": "assalto_furto_02.mp4",
-        "expected": "ROUBO",
+        "expected": "FURTO_LOJA",
         "label": "Subtracao e Ocultacao sob Jaqueta (CCTV 05)"
     },
     {
         "filename": "assalto_furto_03.mp4",
-        "expected": "ROUBO",
+        "expected": "FURTO_LOJA",
         "label": "Furto de Produto e Fuga (CCTV 06)"
     }
 ]

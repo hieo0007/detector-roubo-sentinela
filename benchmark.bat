@@ -4,5 +4,9 @@ cd /d "%~dp0"
 echo ===================================================
 echo   AVALIANDO OS 5 VIDEOS DE FURTO COM A IA
 echo ===================================================
-"C:\Users\hiro0007\AppData\Local\Programs\Python\Python312\python.exe" -m src.benchmark_5_videos
+
+set "PYTHON_EXE=python"
+if exist ".venv\Scripts\python.exe" set "PYTHON_EXE=.venv\Scripts\python.exe"
+
+"%PYTHON_EXE%" -m src.benchmark_5_videos
 pause

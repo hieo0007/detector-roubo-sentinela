@@ -16,5 +16,9 @@ echo.
 echo Para encerrar o sistema, feche esta janela.
 echo =====================================================================
 echo.
-"C:\Users\hiro0007\AppData\Local\Programs\Python\Python312\python.exe" -m src.app
+
+set "PYTHON_EXE=python"
+if exist ".venv\Scripts\python.exe" set "PYTHON_EXE=.venv\Scripts\python.exe"
+
+"%PYTHON_EXE%" -m src.app
 pause

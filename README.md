@@ -13,7 +13,7 @@ Plataforma inteligente de monitoramento CFTV e prevencao de perdas com visao com
 
 ## Destaques
 
-* **Processamento Hibrido Edge-to-Cloud:** Rastreamento local continuo a 30 FPS no Edge com validacao semantica sob demanda na nuvem.
+* **Processamento Hibrido Edge-to-Cloud:** Amostragem local a cada 0.5s de gravacao (2 quadros por segundo) com rastreamento de poses e validacao semantica sob demanda na nuvem.
 * **Latencia Inferior a 2 Segundos:** O modelo multimodal Gemini 3.5 Flash Lite avalia sequencias de Storyboard em ~1.7 segundos.
 * **Eliminacao de Falsos Positivos:** Distincao pericial entre clientes manuseando itens licitamente versus ocultacao premeditada em mochilas, bolsas ou vestimentas.
 * **Calibracao Espacial com o Mouse:** Interface interativa no canvas para tracao de cercas virtuais poligonais em tempo real.
@@ -33,7 +33,7 @@ O sistema opera em um modelo hierarquico de 4 camadas:
              |
              v
 +-------------------------------------------------------------+
-| Nivel 1: Edge Computing Local (30 FPS)                      |
+| Nivel 1: Edge Computing Local (1 quadro a cada 0.5s gravado)|
 | - Deteccao de Pessoas e Objetos: YOLOv8                     |
 | - Rastreamento Temporal Continuo: ByteTrack                 |
 | - Estimativa de Poses: YOLOv8-Pose (Membros e Articulacoes) |
@@ -98,7 +98,7 @@ Copie o modelo de configuracao e insira sua chave da API:
 ```bash
 cp config.example.json config.json
 ```
-Edite o arquivo `config.json`:
+No arquivo `config.json`, configure sua chave da API Gemini:
 ```json
 {
   "camera": {
@@ -166,13 +166,23 @@ Avaliacao de acuracia executada contra banco de dados pericial contendo gravacoe
 
 | Metodo | Rota | Funcao |
 |---|---|---|
-| `GET` | `/video_feed` | Fluxo de video continuo com telemetria visual anotada via MJPEG |
-| `POST` | `/api/analyze` | Inicia o processamento analitico sobre arquivo de video selecionado |
-| `GET` | `/api/progress/<task_id>` | Retorna status percentual e etapa do processamento em execucao |
-| `GET` | `/api/test-videos` | Catalogo de videos de validacao indexados no servidor |
+| `GET` | `/` | Dashboard principal web da central Sentinela |
+| `GET` | `/api/config` | Consulta o status da chave Gemini e do bot Telegram |
+| `POST` | `/api/config` | Atualiza configuracoes de credenciais e chaves de API |
+| `POST` | `/api/telegram/test` | Envia notificacao de teste para o canal Telegram configurado |
 | `GET` | `/api/fence` | Retorna as coordenadas vetoriais atuais da cerca perimetral |
 | `POST` | `/api/fence` | Define novo poligono de cerca desenhado interativamente |
+| `GET` | `/api/shelf` | Retorna as zonas ativas de prateleiras e gondolas |
+| `POST` | `/api/shelf` | Atualiza as zonas monitoradas de prateleiras |
+| `GET` | `/api/test-videos` | Catalogo de videos de validacao indexados no servidor |
+| `POST` | `/api/upload` | Envia novo arquivo de video para a fila de gravacoes |
 | `GET` | `/videos/<filename>` | Servico de video com suporte a Range requests (HTTP 206) |
+| `GET` | `/video_feed/<filename>` | Fluxo contínuo de video com telemetria e HUD anotado via MJPEG |
+| `GET` | `/api/video-info/<filename>` | Retorna duracao, FPS e resolucao da gravacao |
+| `POST` | `/api/analyze-async` | Inicia analise assincrona do video e devolve `job_id` |
+| `GET` | `/api/progress/<job_id>` | Consulta o status percentual e o resultado final da analise |
+| `GET` | `/api/snapshots/storyboards/<filename>` | Serve imagens compostas de storyboards temporais avaliados |
+| `GET` | `/snapshots/<filename>` | Serve capturas instantaneas individuais da timeline |
 
 ---
 

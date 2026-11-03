@@ -14,7 +14,7 @@ import cv2
 
 from .camera import VideoStreamBuffer
 from .motion import MotionDetector
-from .analyzer import TheftAnalyzer
+from .analyzer import SecurityAnalyzer
 from .alert import AlertManager
 
 def load_config(config_path: str = "config.json") -> dict:
@@ -52,13 +52,13 @@ def run_system(camera_source=None, preview=True):
         return
 
     motion_detector = MotionDetector(min_area=min_area)
-    analyzer = TheftAnalyzer()
+    analyzer = SecurityAnalyzer()
     alert_manager = AlertManager(play_sound=play_sound)
 
     last_analysis_time = 0
     cooldown_seconds = config.get("motion_filter", {}).get("cooldown_seconds", 4.0)
 
-    print("🟢 Monitoramento ativo! Pressione 'q' na janela de vídeo para encerrar.\n")
+    print("[INFO] Monitoramento ativo. Pressione 'q' na janela de video para encerrar.\n")
 
     try:
         while True:

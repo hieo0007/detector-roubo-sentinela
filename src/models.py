@@ -14,6 +14,7 @@ class EventType(str, Enum):
     INVASAO_PERIMETRO = "INVASAO_PERIMETRO"
     ASSALTO_RENDICAO = "ASSALTO_RENDICAO"
     SUSPEITO = "SUSPEITO"
+    ERRO_ANALISE = "ERRO_ANALISE"
 
 class RiskLevel(str, Enum):
     NORMAL = "NORMAL"
@@ -77,6 +78,18 @@ class SecurityAnalysisResult(BaseModel):
     timeline: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="Passos cronológicos detalhados com snapshots anotados."
+    )
+    erro: bool = Field(
+        default=False,
+        description="True se ocorreu falha de comunicação ou resposta inválida na análise."
+    )
+    erro_detalhe: Optional[str] = Field(
+        default=None,
+        description="Mensagem técnica ou detalhe da falha caso erro=True."
+    )
+    ia_respondeu: bool = Field(
+        default=True,
+        description="False se a IA não respondeu e foi utilizado laudo de contingência do motor local."
     )
 
 # Alias para compatibilidade com código legado se necessário

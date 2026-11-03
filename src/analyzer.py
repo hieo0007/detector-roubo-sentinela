@@ -262,6 +262,29 @@ class SecurityAnalyzer:
             update_progress(75.0, total_frames, total_frames, "Consultando verificador analítico...")
             ai_result = self.storyboard_verifier.verify_with_ai(self.client, img_bytes, mode=mode)
             ai_result.storyboard_url = storyboard_rel_url
+
+            # Se a IA falhou ou retornou erro, aciona o laudo de reserva do motor local
+            if ai_result.erro or not ai_result.ia_respondeu or ai_result.tipo_evento == EventType.ERRO_ANALISE:
+                print(f"[ANALISADOR] [ALERTA] Falha na comunicacao ou resposta invalida da IA: {ai_result.erro_detalhe or ai_result.descricao_acao}")
+                print("[ANALISADOR] [CONTINGENCIA] Acionando laudo de reserva do motor local...")
+                update_progress(85.0, total_frames, total_frames, "Falha na IA - Ativando laudo local de contingencia...")
+                local_result = self._evaluate_local(
+                    mode=mode,
+                    surrender_events=surrender_events,
+                    intrusion_events=intrusion_events,
+                    shoplifting_events=shoplifting_events,
+                    detected_objects=detected_objects,
+                    duration=duration,
+                    storyboard_url=storyboard_rel_url
+                )
+                local_result.erro = True
+                local_result.ia_respondeu = False
+                local_result.erro_detalhe = ai_result.erro_detalhe or ai_result.descricao_acao
+                local_result.descricao_acao = f"[AVISO: Falha na IA - Laudo local de contingencia] {local_result.descricao_acao}"
+                final_result = self._finalize_result(local_result, video_path, sb_path)
+                update_progress(100.0, total_frames, total_frames, "Concluido com laudo local de contingencia.")
+                return final_result
+
             for obj in detected_objects:
                 if obj not in ai_result.itens_envolvidos:
                     ai_result.itens_envolvidos.append(f"{obj} (rastreado)")
