@@ -14,7 +14,7 @@ Plataforma inteligente de monitoramento CFTV e prevencao de perdas com visao com
 ## Destaques
 
 * **Processamento Hibrido Edge-to-Cloud:** Amostragem local a cada 0.5s de gravacao (2 quadros por segundo) com rastreamento de poses e validacao semantica sob demanda na nuvem.
-* **Latencia Inferior a 2 Segundos:** O modelo multimodal Gemini 3.5 Flash Lite avalia sequencias de Storyboard em ~1.7 segundos.
+* **Validação Semântica via Storyboard:** O modelo multimodal Gemini 3.5 Flash Lite avalia sequências compostas de quadros-chave sob demanda com telemetria cronológica.
 * **Eliminacao de Falsos Positivos:** Distincao pericial entre clientes manuseando itens licitamente versus ocultacao premeditada em mochilas, bolsas ou vestimentas.
 * **Calibracao Espacial com o Mouse:** Interface interativa no canvas para tracao de cercas virtuais poligonais em tempo real.
 * **Custodia Forense H.264 Automatizada:** Exportacao imediata do clipe da ocorrencia (pre e pos-evento) codificado em H.264 (avc1 + faststart) compativel com navegadores.
@@ -52,7 +52,7 @@ O sistema opera em um modelo hierarquico de 4 camadas:
              v
 +-------------------------------------------------------------+
 | Nivel 3: Validacao Semantica Multimodal (Gemini 3.5 Nuvem)  |
-| - Inferencia contextual pericial em menos de 2.0 segundos   |
+| - Inferencia contextual pericial sob demanda                 |
 | - Diferenciacao entre acao rotineira vs. delito patrimonial |
 | - Retorno estruturado em JSON com confianca e diretriz      |
 +-------------------------------------------------------------+
@@ -149,13 +149,16 @@ Métricas de acurácia e desempenho medidas em execução real contra o gabarito
 
 * **Data do Último Benchmark:** 2026-11-03
 * **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
-* **Total de Vídeos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
-* **Acurácia Global:** 66,67% (8/12 acertos)
-* **Precisão (Precision):** 71,43%
+* **Total de Vídeos Válidos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
+* **Acurácia Global:** 66,67% (8/12 acertos exatos de classe)
+* **Precisão (Precision):** 62,50%
 * **Sensibilidade (Recall):** 71,43%
+* **Erros de Classe (Crime Detectado com Tipo Errado):** 1 (`roubo_mercado_02.mp4`)
 * **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4`, `atividade_normal_balcao_05.mp4`)
-* **Falsos Negativos:** 2 (`assalto_furto_01.mp4` por contingência local, `roubo_mercado_01.mp4`)
-* **Tempo Médio de Resposta por Vídeo:** 17,98s
+* **Falsos Negativos:** 1 (`roubo_mercado_01.mp4`)
+* **Falhas de IA (ERRO_IA):** 0
+* **Tempo Médio Total por Vídeo:** 14,90s
+* **Tempo Médio da Chamada ao Gemini:** 3,60s
 
 Para rodar novamente a bateria completa de benchmark e gerar novos relatórios em `resultados/`:
 

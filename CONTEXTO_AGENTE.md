@@ -18,7 +18,7 @@ O **Sentinela CCTV** é uma plataforma de monitoramento de segurança eletrônic
 
 ### A Solução Implementada (Arquitetura Híbrida Edge + Nuvem):
 * **No Edge (Amostragem a cada 0.5s):** Rastreamento de pessoas com **YOLOv8 + ByteTrack**, estimativa de pose anatômica (mãos, ombros, quadris) e polígonos vetoriais de cerca virtual e prateleiras.
-* **Na Nuvem (Verificação em < 2 segundos):** Quando um padrão de interesse ocorre, o sistema gera um **Storyboard Forense Temporal** (tira JPEG horizontal ultra-leve de 6 quadros em 480x270 com carimbos `T=Xs`, ~60 KB) e envia ao **Google Gemini 3.5 Flash Lite**. A IA analisa a intencionalidade da ação e retorna o diagnóstico com precisão cirúrgica.
+* **Na Nuvem (Verificação Multimodal sob Demanda):** Quando um padrão de interesse ocorre, o sistema gera um **Storyboard Forense Temporal** (tira JPEG horizontal ultra-leve de 6 quadros em 480x270 com carimbos `T=Xs`, ~60 KB) e envia ao **Google Gemini 3.5 Flash Lite**. A IA analisa a intencionalidade da ação e retorna o diagnóstico com precisão cirúrgica.
 * **Custódia Forense Imediata:** Clipes de evidência cortados automaticamente (pré e pós-ocorrência) transcodificados para **H.264 (avc1) web-ready com faststart**, permitindo streaming com suporte a HTTP 206 (Range requests).
 
 ---
@@ -91,13 +91,16 @@ Os testes automatizados com o gabarito oficial (`videos_teste/gabarito.csv`) sã
 
 * **Data do Último Benchmark:** 2026-11-03
 * **Versão Avaliada:** YOLOv8n + Gemini 3.5 Flash Lite
-* **Total de Vídeos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
-* **Acurácia Global:** 66,67% (8/12 acertos)
-* **Precisão (Precision):** 71,43%
+* **Total de Vídeos Válidos Avaliados:** 12 vídeos (5 normais / 7 ocorrências reais)
+* **Acurácia Global:** 66,67% (8/12 acertos exatos de classe)
+* **Precisão (Precision):** 62,50%
 * **Sensibilidade (Recall):** 71,43%
+* **Erros de Classe (Crime Detectado com Tipo Errado):** 1 (`roubo_mercado_02.mp4`)
 * **Falsos Positivos:** 2 (`cliente_normal_compras_04.mp4` e `atividade_normal_balcao_05.mp4`)
-* **Falsos Negativos:** 2 (`assalto_furto_01.mp4` por contingência local, `roubo_mercado_01.mp4`)
-* **Tempo Médio de Análise:** 17,98s por vídeo
+* **Falsos Negativos:** 1 (`roubo_mercado_01.mp4`)
+* **Falhas de IA (ERRO_IA):** 0
+* **Tempo Médio Total:** 14,90s por vídeo
+* **Tempo Médio da Chamada ao Gemini:** 3,60s por chamada
 * **Arquivo Fonte:** `resultados/benchmark_2026-11-03.json` e `resultados/benchmark_2026-11-03.md`
 
 Para rodar a bateria oficial de testes:

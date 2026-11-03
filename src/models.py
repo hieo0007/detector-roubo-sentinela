@@ -92,6 +92,10 @@ class SecurityAnalysisResult(BaseModel):
         default=True,
         description="False se a IA não respondeu e foi utilizado laudo de contingência do motor local."
     )
+    tempo_ia_segundos: Optional[float] = Field(
+        default=None,
+        description="Tempo em segundos da chamada à API do Gemini."
+    )
 
 # Alias para compatibilidade com código legado se necessário
 TheftAnalysisResult = SecurityAnalysisResult

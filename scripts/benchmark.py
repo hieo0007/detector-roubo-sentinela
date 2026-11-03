@@ -44,11 +44,16 @@ def run_benchmark(
     print("="*80 + "\n")
 
     results: List[Dict[str, Any]] = []
+    erros_ia_list: List[Dict[str, Any]] = []
+
     tp = 0
     tn = 0
     fp = 0
     fn = 0
-    total_time = 0.0
+    erros_classe = 0
+
+    tempos_totais: List[float] = []
+    tempos_gemini: List[float] = []
 
     for idx, row in enumerate(rows, start=1):
         filename = row["arquivo"].strip()
@@ -61,83 +66,135 @@ def run_benchmark(
             continue
 
         print(f"[{idx}/{len(rows)}] Analisando: {filename} (Esperado: {expected})...")
-        t0 = time.time()
-        try:
-            report = analyzer.analyze_clip(video_path)
-            elapsed = round(time.time() - t0, 2)
-        except Exception as e:
-            elapsed = round(time.time() - t0, 2)
-            print(f"  [FALHA DE PROCESSAMENTO] {e}")
-            results.append({
+
+        # Execucao com retentativa automatica de ate 2 vezes caso ocorra erro na IA
+        report = None
+        elapsed_total = 0.0
+        max_attempts = 3  # tentativa inicial + 2 retentativas
+
+        for attempt in range(1, max_attempts + 1):
+            t0 = time.time()
+            try:
+                report = analyzer.analyze_clip(video_path)
+                elapsed_total = round(time.time() - t0, 2)
+            except Exception as e:
+                elapsed_total = round(time.time() - t0, 2)
+                print(f"  [AVISO] Excecao na tentativa {attempt}/{max_attempts}: {e}")
+                report = None
+
+            if report and not report.erro and report.tipo_evento != EventType.ERRO_ANALISE:
+                break
+
+            if attempt < max_attempts:
+                print(f"  [AVISO] Tentativa {attempt}/{max_attempts} falhou com ERRO_IA. Retentando em 2 segundos...")
+                time.sleep(2.0)
+
+        # Trata falha persistente da IA
+        if report is None or report.erro or report.tipo_evento == EventType.ERRO_ANALISE:
+            status = "ERRO_IA"
+            erro_msg = report.erro_detalhe if report else "Falha de comunicacao ou excecao nao tratada"
+            print(f"  Status: {status} | Falha na IA persistiu apos {max_attempts} tentativas.")
+            item_data = {
                 "arquivo": filename,
                 "esperado": expected,
-                "classificacao": "ERRO",
-                "risco": "ERRO",
-                "confianca": 0.0,
-                "tempo_segundos": elapsed,
-                "status": "ERRO_PROCESSAMENTO",
-                "detalhe": str(e),
+                "classificacao": "ERRO_ANALISE",
+                "risco": report.nivel_risco.value if report else "SUSPEITO",
+                "confianca": report.confianca if report else 0.0,
+                "tempo_total_segundos": elapsed_total,
+                "tempo_gemini_segundos": getattr(report, "tempo_ia_segundos", None),
+                "status": status,
+                "detalhe": erro_msg,
                 "origem": origem
-            })
+            }
+            results.append(item_data)
+            erros_ia_list.append(item_data)
             continue
 
-        total_time += elapsed
+        # Tempos medidos
+        tempo_gemini = getattr(report, "tempo_ia_segundos", None)
+        tempos_totais.append(elapsed_total)
+        if tempo_gemini is not None:
+            tempos_gemini.append(tempo_gemini)
 
+        # Regras estritas de avaliacao:
+        # Acerto positivo exige classificacao exatamente igual ao esperado
+        got_type = report.tipo_evento.value
         is_crime_expected = (expected != "NORMAL")
         is_crime_detected = report.evento_detectado and (
             report.nivel_risco in [RiskLevel.ALERTA_MAXIMO, RiskLevel.SUSPEITO]
         )
 
-        if is_crime_expected and is_crime_detected:
-            status = "ACERTO_POSITIVO"
-            tp += 1
-        elif not is_crime_expected and not is_crime_detected:
-            status = "ACERTO_NEGATIVO"
-            tn += 1
-        elif not is_crime_expected and is_crime_detected:
-            status = "FALSO_POSITIVO"
-            fp += 1
+        if is_crime_expected:
+            if got_type == expected:
+                status = "ACERTO_POSITIVO"
+                tp += 1
+            elif is_crime_detected:
+                status = "ERRO_CLASSE"
+                erros_classe += 1
+            else:
+                status = "FALSO_NEGATIVO"
+                fn += 1
         else:
-            status = "FALSO_NEGATIVO"
-            fn += 1
+            if got_type == "NORMAL" and not is_crime_detected:
+                status = "ACERTO_NEGATIVO"
+                tn += 1
+            else:
+                status = "FALSO_POSITIVO"
+                fp += 1
 
-        print(f"  Status: {status} | Risco: {report.nivel_risco.value} | Conf: {report.confianca:.1f}% | Tempo: {elapsed}s")
+        t_gemini_str = f"{tempo_gemini}s" if tempo_gemini is not None else "N/A"
+        print(f"  Status: {status} | Tipo: {got_type} | Risco: {report.nivel_risco.value} | Conf: {report.confianca:.1f}%")
+        print(f"  Tempo Total: {elapsed_total}s | Tempo Gemini: {t_gemini_str}")
         print(f"  Laudo: {report.descricao_acao[:80]}...")
 
         results.append({
             "arquivo": filename,
             "esperado": expected,
-            "classificacao": report.tipo_evento.value,
+            "classificacao": got_type,
             "risco": report.nivel_risco.value,
             "confianca": report.confianca,
-            "tempo_segundos": elapsed,
+            "tempo_total_segundos": elapsed_total,
+            "tempo_gemini_segundos": tempo_gemini,
             "status": status,
             "timestamp_segundo": report.timestamp_segundo,
             "descricao": report.descricao_acao,
             "origem": origem
         })
 
-    total_valid = tp + tn + fp + fn
-    accuracy = round(((tp + tn) / total_valid * 100.0), 2) if total_valid > 0 else 0.0
-    precision = round((tp / (tp + fp) * 100.0), 2) if (tp + fp) > 0 else 0.0
-    recall = round((tp / (tp + fn) * 100.0), 2) if (tp + fn) > 0 else 0.0
-    avg_time = round(total_time / total_valid, 2) if total_valid > 0 else 0.0
+    # Metricas excluem ERRO_IA (mostrado a parte conforme diretriz)
+    total_valid = tp + tn + fp + fn + erros_classe
+    acertos = tp + tn
+    accuracy = round((acertos / total_valid * 100.0), 2) if total_valid > 0 else 0.0
+
+    # Precisao: acertos positivos sobre todos os crimes sinalizados (TP + FP + ERRO_CLASSE)
+    denom_precisao = tp + fp + erros_classe
+    precision = round((tp / denom_precisao * 100.0), 2) if denom_precisao > 0 else 0.0
+
+    # Recall: acertos positivos sobre todos os crimes esperados (TP + FN + ERRO_CLASSE)
+    denom_recall = tp + fn + erros_classe
+    recall = round((tp / denom_recall * 100.0), 2) if denom_recall > 0 else 0.0
+
+    avg_total_time = round(sum(tempos_totais) / len(tempos_totais), 2) if tempos_totais else 0.0
+    avg_gemini_time = round(sum(tempos_gemini) / len(tempos_gemini), 2) if tempos_gemini else 0.0
 
     today_str = datetime.now().strftime("%Y-%m-%d")
     output_data = {
         "data_execucao": today_str,
         "versao_modelo": model_version,
-        "total_videos": total_valid,
-        "acertos": tp + tn,
+        "total_videos_processados": len(results),
+        "total_videos_validos": total_valid,
+        "erros_ia_total": len(erros_ia_list),
+        "acertos_totais": acertos,
         "acertos_positivos": tp,
         "acertos_negativos": tn,
+        "erros_classe": erros_classe,
         "falsos_positivos": fp,
         "falsos_negativos": fn,
         "acuracia_percentual": accuracy,
         "precisao_percentual": precision,
         "recall_percentual": recall,
-        "tempo_medio_segundos": avg_time,
-        "tempo_total_segundos": round(total_time, 2),
+        "tempo_medio_total_segundos": avg_total_time,
+        "tempo_medio_gemini_segundos": avg_gemini_time,
         "resultados": results
     }
 
@@ -152,29 +209,36 @@ def run_benchmark(
         f.write(f"# Relatório de Benchmark - Sentinela CCTV\n\n")
         f.write(f"- **Data de Execução**: {today_str}\n")
         f.write(f"- **Versão do Modelo**: {model_version}\n")
-        f.write(f"- **Total de Vídeos Avaliados**: {total_valid}\n")
+        f.write(f"- **Total de Vídeos Válidos Avaliados**: {total_valid}\n")
+        f.write(f"- **Erros de Comunicação / API (ERRO_IA)**: {len(erros_ia_list)} (excluídos das métricas de acurácia)\n")
         f.write(f"- **Acurácia Global**: {accuracy}%\n")
         f.write(f"- **Precisão (Precision)**: {precision}%\n")
         f.write(f"- **Sensibilidade (Recall)**: {recall}%\n")
+        f.write(f"- **Erros de Classe (Crime Detectado com Tipo Errado)**: {erros_classe}\n")
         f.write(f"- **Falsos Positivos**: {fp}\n")
         f.write(f"- **Falsos Negativos**: {fn}\n")
-        f.write(f"- **Tempo Médio por Vídeo**: {avg_time}s\n\n")
+        f.write(f"- **Tempo Médio Total por Vídeo**: {avg_total_time}s\n")
+        f.write(f"- **Tempo Médio da Chamada ao Gemini**: {avg_gemini_time}s\n\n")
         f.write("## Tabela Detalhada por Cenário\n\n")
-        f.write("| Arquivo | Esperado | Classificação | Risco | Confiança | Tempo (s) | Status |\n")
-        f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
+        f.write("| Arquivo | Esperado | Classificação | Risco | Confiança | Tempo Total (s) | Tempo Gemini (s) | Status | Origem |\n")
+        f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
         for r in results:
-            f.write(f"| `{r['arquivo']}` | {r['esperado']} | {r['classificacao']} | {r['risco']} | {r['confianca']:.1f}% | {r['tempo_segundos']}s | {r['status']} |\n")
+            tg_str = f"{r['tempo_gemini_segundos']}s" if r.get('tempo_gemini_segundos') is not None else "-"
+            f.write(f"| `{r['arquivo']}` | {r['esperado']} | {r['classificacao']} | {r['risco']} | {r['confianca']:.1f}% | {r['tempo_total_segundos']}s | {tg_str} | {r['status']} | {r.get('origem', '')} |\n")
 
     print("\n" + "="*80)
     print("  RESUMO CONSOLIDADO DO BENCHMARK")
     print("="*80)
-    print(f"Total de Videos   : {total_valid}")
-    print(f"Acertos           : {tp + tn} ({accuracy}%)")
-    print(f"Falsos Positivos  : {fp}")
-    print(f"Falsos Negativos  : {fn}")
-    print(f"Precisao          : {precision}%")
-    print(f"Recall            : {recall}%")
-    print(f"Tempo Medio       : {avg_time}s / video")
+    print(f"Total de Videos Validos : {total_valid}")
+    print(f"Falhas na IA (ERRO_IA)  : {len(erros_ia_list)}")
+    print(f"Acertos Totais          : {acertos} ({accuracy}%)")
+    print(f"Erros de Classe         : {erros_classe}")
+    print(f"Falsos Positivos        : {fp}")
+    print(f"Falsos Negativos        : {fn}")
+    print(f"Precisao                : {precision}%")
+    print(f"Recall                  : {recall}%")
+    print(f"Tempo Medio Total       : {avg_total_time}s / video")
+    print(f"Tempo Medio Gemini      : {avg_gemini_time}s / chamada")
     print(f"Relatorios Salvos :")
     print(f"  - {json_path}")
     print(f"  - {md_path}")

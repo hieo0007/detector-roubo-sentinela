@@ -1,17 +1,20 @@
 {
   "data_execucao": "2026-11-03",
   "versao_modelo": "YOLOv8n + Gemini 3.5 Flash Lite",
-  "total_videos": 12,
-  "acertos": 8,
+  "total_videos_processados": 12,
+  "total_videos_validos": 12,
+  "erros_ia_total": 0,
+  "acertos_totais": 8,
   "acertos_positivos": 5,
   "acertos_negativos": 3,
+  "erros_classe": 1,
   "falsos_positivos": 2,
-  "falsos_negativos": 2,
+  "falsos_negativos": 1,
   "acuracia_percentual": 66.67,
-  "precisao_percentual": 71.43,
+  "precisao_percentual": 62.5,
   "recall_percentual": 71.43,
-  "tempo_medio_segundos": 17.98,
-  "tempo_total_segundos": 215.75,
+  "tempo_medio_total_segundos": 14.9,
+  "tempo_medio_gemini_segundos": 3.6,
   "resultados": [
     {
       "arquivo": "pedestre_normal_01.mp4",
@@ -19,11 +22,12 @@
       "classificacao": "NORMAL",
       "risco": "NORMAL",
       "confianca": 99.0,
-      "tempo_segundos": 8.42,
+      "tempo_total_segundos": 10.68,
+      "tempo_gemini_segundos": 2.13,
       "status": "ACERTO_NEGATIVO",
       "timestamp_segundo": 0.0,
-      "descricao": "Sequência de quadros demonstrando o ambiente estático de um escritório ao longo do tempo (T=0.0s a T=10.6s), sem movimentação humana, subtração de bens ou ocorrência de incidentes de segurança patrimonial.",
-      "origem": "Banco CFTV - Transito livre de pedestres"
+      "descricao": "A sequência de quadros exibe o ambiente de escritório com mesas, computadores e vidraças ao fundo ao longo do tempo (de T=0.0s até T=10.6s). Não há movimentação de pessoas, subtração de bens, invasão ou ameaça detectada em nenhum dos quadros.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20-%20MNNIT/Normal/Normal%20(1).mp4"
     },
     {
       "arquivo": "pedestre_normal_02.mp4",
@@ -31,11 +35,12 @@
       "classificacao": "NORMAL",
       "risco": "NORMAL",
       "confianca": 95.0,
-      "tempo_segundos": 7.68,
+      "tempo_total_segundos": 9.02,
+      "tempo_gemini_segundos": 2.29,
       "status": "ACERTO_NEGATIVO",
       "timestamp_segundo": 4.5,
-      "descricao": "Indivíduo circula livremente pelo corredor do estabelecimento durante o período monitorado, sem realizar nenhuma conduta de ocultação de produtos em bolsos, mochilas ou vestimentas, mantendo as mãos visíveis e o comportamento condizente com a rotina de trânsito interno.",
-      "origem": "Banco CFTV - Cliente circulando com maos visiveis"
+      "descricao": "Indivíduo circula pelo estabelecimento caminhando pacificamente entre os corredores, sem realizar nenhuma conduta de ocultação de produtos em bolsos ou mochilas. A atividade observada corresponde à rotina operacional do local.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20Dataset%202.0/normal/shop_lifter_n_1.mp4"
     },
     {
       "arquivo": "pedestre_normal_03.mp4",
@@ -43,11 +48,12 @@
       "classificacao": "NORMAL",
       "risco": "NORMAL",
       "confianca": 95.0,
-      "tempo_segundos": 61.4,
+      "tempo_total_segundos": 4.72,
+      "tempo_gemini_segundos": 1.81,
       "status": "ACERTO_NEGATIVO",
-      "timestamp_segundo": 0.0,
-      "descricao": "Funcionário em ambiente de escritório/estoque manuseia caixas, pacotes e etiquetas sobre as mesas de forma rotineira, sem realizar nenhuma ocultação de mercadorias ou conduta suspeita.",
-      "origem": "Banco CFTV - Movimentacao regular de pedestres"
+      "timestamp_segundo": 5.2,
+      "descricao": "Colaborador posicionado em mesa organizando pacotes e documentos, sem realizar qualquer tipo de ocultação de mercadorias ou conduta suspeita.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20-%20MNNIT/Normal/Normal%20(15).mp4"
     },
     {
       "arquivo": "cliente_normal_compras_04.mp4",
@@ -55,11 +61,12 @@
       "classificacao": "ASSALTO_RENDICAO",
       "risco": "ALERTA_MAXIMO",
       "confianca": 95.0,
-      "tempo_segundos": 41.07,
+      "tempo_total_segundos": 13.72,
+      "tempo_gemini_segundos": 2.01,
       "status": "FALSO_POSITIVO",
       "timestamp_segundo": 3.7,
       "descricao": "Postura explícita de rendição com mãos para cima detectada pelo esqueleto.",
-      "origem": "Cenario teste - Cliente colocando produto no carrinho"
+      "origem": "origem desconhecida"
     },
     {
       "arquivo": "atividade_normal_balcao_05.mp4",
@@ -67,23 +74,25 @@
       "classificacao": "FURTO_LOJA",
       "risco": "ALERTA_MAXIMO",
       "confianca": 98.0,
-      "tempo_segundos": 12.28,
+      "tempo_total_segundos": 21.07,
+      "tempo_gemini_segundos": 18.28,
       "status": "FALSO_POSITIVO",
-      "timestamp_segundo": 1.8,
-      "descricao": "Indivíduo com touca e mochila é observado nos quadros manipulando um item (produto) retirado do expositor/mesa central (T=0.0s a T=0.6s) e, em seguida, realiza o movimento de ocultação do item para o interior da mochila pessoal nas costas entre T=1.2s e T=2.5s.",
-      "origem": "Cenario teste - Funcionario arrumando prateleira e guardando celular no bolso"
+      "timestamp_segundo": 1.2,
+      "descricao": "Indivíduo com touca preta e blusa branca retira um produto de uma prateleira/expositor (T=0.0s a T=0.6s) e o oculta rapidamente dentro de sua mochila pessoal que carrega nas costas (T=1.2s a T=2.5s), configurando furto por ocultação.",
+      "origem": "origem desconhecida"
     },
     {
       "arquivo": "assalto_furto_01.mp4",
       "esperado": "FURTO_LOJA",
-      "classificacao": "NORMAL",
-      "risco": "SUSPEITO",
-      "confianca": 0.0,
-      "tempo_segundos": 33.61,
-      "status": "FALSO_NEGATIVO",
-      "timestamp_segundo": 0.0,
-      "descricao": "[AVISO: Falha na IA - Laudo local de contingencia] Ambiente monitorado sem anomalias críticas detectadas pelo motor local.",
-      "origem": "CCTV Real - Subtracao de mercadoria em prateleira"
+      "classificacao": "FURTO_LOJA",
+      "risco": "ALERTA_MAXIMO",
+      "confianca": 98.0,
+      "tempo_total_segundos": 15.17,
+      "tempo_gemini_segundos": 3.45,
+      "status": "ACERTO_POSITIVO",
+      "timestamp_segundo": 5.2,
+      "descricao": "Indivíduo é observado em sequência de quadros (de T=2.6s a T=7.7s) manipulando um pequeno objeto sobre a mesa expositora e realizando o ato de ocultação do item diretamente no bolso dianteiro/lateral da calça.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20-%20MNNIT/Shoplifting/Shoplifting%20(1).mp4"
     },
     {
       "arquivo": "assalto_furto_02.mp4",
@@ -91,11 +100,12 @@
       "classificacao": "FURTO_LOJA",
       "risco": "ALERTA_MAXIMO",
       "confianca": 98.0,
-      "tempo_segundos": 8.47,
+      "tempo_total_segundos": 8.11,
+      "tempo_gemini_segundos": 2.13,
       "status": "ACERTO_POSITIVO",
-      "timestamp_segundo": 1.9,
-      "descricao": "O indivíduo retira furtivamente mercadorias/pacotes de cima das mesas em um ambiente corporativo/estoque e procede à ocultação dos itens dentro de sua própria mochila pessoal, demonstrando intenção de subtração patrimonial ilícita ao longo da sequência temporal.",
-      "origem": "CCTV Real - Ocultacao de produto sob jaqueta"
+      "timestamp_segundo": 1.2,
+      "descricao": "Indivíduo é observado em sequência de quadros (desde T=0.0s até T=2.5s) pegando objetos/mercadorias de mesas de escritório/estocagem e colocando-os ativamente e de forma dissimulada dentro de sua mochila pessoal para ocultação e subtração patrimonial.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20-%20MNNIT/Shoplifting/Shoplifting%20(10).mp4"
     },
     {
       "arquivo": "assalto_furto_03.mp4",
@@ -103,11 +113,12 @@
       "classificacao": "FURTO_LOJA",
       "risco": "ALERTA_MAXIMO",
       "confianca": 98.0,
-      "tempo_segundos": 8.31,
+      "tempo_total_segundos": 10.75,
+      "tempo_gemini_segundos": 2.13,
       "status": "ACERTO_POSITIVO",
       "timestamp_segundo": 4.0,
-      "descricao": "Indivíduo em pé ao lado da mesa de trabalho/exposição seleciona um objeto pequeno sobre a bancada e o oculta discretamente dentro do bolso frontal/lateral da calça entre T=1.0s e T=5.0s, caracterizando furto interno ou subtração patrimonial.",
-      "origem": "CCTV Real - Furto de item e evasao do corredor"
+      "descricao": "Indivíduo postado próximo a uma bancada de escritório/exposição manuseia um objeto pequeno sobre a mesa (entre T=1.0s e T=3.0s) e, em seguida, realiza o movimento de ocultação do item dentro do bolso dianteiro/lateral da calça (entre T=4.0s e T=5.0s), caracterizando subtração e ocultação patrimonial.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20-%20MNNIT/Shoplifting/Shoplifting%20(15).mp4"
     },
     {
       "arquivo": "furto_real_mercado_01.mp4",
@@ -115,11 +126,12 @@
       "classificacao": "FURTO_LOJA",
       "risco": "ALERTA_MAXIMO",
       "confianca": 99.0,
-      "tempo_segundos": 8.2,
+      "tempo_total_segundos": 18.59,
+      "tempo_gemini_segundos": 2.07,
       "status": "ACERTO_POSITIVO",
       "timestamp_segundo": 11.5,
-      "descricao": "Indivíduo encapuzado manipula produtos sobre o balcão da loja e os oculta ativamente dentro de sua mochila nos quadros sequenciais de T=9.5s a T=13.5s, configurando furto qualificado por ocultação.",
-      "origem": "CCTV Real - Furto de produto em supermercado"
+      "descricao": "Indivíduo encapuzado (vestindo moletom preto com capuz) manipula caixas/produtos sobre o balcão e os oculta ativamente dentro de uma mochila preta entre os instantes T=9.5s e T=13.5s, configurando furto qualificado por ocultação de mercadoria.",
+      "origem": "origem desconhecida"
     },
     {
       "arquivo": "furto_real_gondola_02.mp4",
@@ -127,11 +139,12 @@
       "classificacao": "FURTO_LOJA",
       "risco": "ALERTA_MAXIMO",
       "confianca": 99.0,
-      "tempo_segundos": 8.79,
+      "tempo_total_segundos": 18.12,
+      "tempo_gemini_segundos": 1.96,
       "status": "ACERTO_POSITIVO",
       "timestamp_segundo": 4.5,
-      "descricao": "Indivíduo aproxima-se de veículo com porta destrancada, subtrai bolsa de couro deixada no interior (banco dianteiro) por volta de T=4.5s e evade-se do local.",
-      "origem": "CCTV Real - Furto em gondola comercial"
+      "descricao": "Indivíduo em atitude suspeita abre a porta do veículo e subtrai uma bolsa de couro que estava sobre o banco do motorista, evadindo-se do local em seguida.",
+      "origem": "origem desconhecida"
     },
     {
       "arquivo": "roubo_mercado_01.mp4",
@@ -139,11 +152,12 @@
       "classificacao": "NORMAL",
       "risco": "NORMAL",
       "confianca": 95.0,
-      "tempo_segundos": 6.84,
+      "tempo_total_segundos": 20.46,
+      "tempo_gemini_segundos": 2.94,
       "status": "FALSO_NEGATIVO",
       "timestamp_segundo": 6.5,
-      "descricao": "Uma pessoa entra no ambiente pelo fundo, caminha ao longo da sala e sai pela mesma direção, sem realizar qualquer ação suspeita, furto ou manipulação oculta de itens.",
-      "origem": "CCTV Real - Subtracao em prateleira comercial"
+      "descricao": "Uma pessoa caminha pacificamente pelo corredor do estabelecimento entre as mesas e prateleiras, circulando livremente pelo ambiente sem realizar qualquer ação de ocultação de produtos em mochilas ou bolsos.",
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20Dataset%202.0/shoplifting/shop_lifter_0.mp4"
     },
     {
       "arquivo": "roubo_mercado_02.mp4",
@@ -151,11 +165,12 @@
       "classificacao": "INVASAO_PERIMETRO",
       "risco": "ALERTA_MAXIMO",
       "confianca": 95.0,
-      "tempo_segundos": 10.68,
-      "status": "ACERTO_POSITIVO",
+      "tempo_total_segundos": 28.4,
+      "tempo_gemini_segundos": 1.99,
+      "status": "ERRO_CLASSE",
       "timestamp_segundo": 2.4,
       "descricao": "Invasão confirmada da cerca virtual nos segundos [2.4, 2.9, 3.4].",
-      "origem": "CCTV Real - Subtracao rapida em balcao"
+      "origem": "https://huggingface.co/datasets/Centrique/tcc-shoplifting/resolve/main/Shoplifting%20Dataset%202.0/shoplifting/shop_lifter_1.mp4"
     }
   ]
 }

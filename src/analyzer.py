@@ -27,7 +27,7 @@ class SecurityAnalyzer:
     1. Detecção Local em Tempo Real com ByteTrack (IDs persistentes).
     2. Suporte a Zonas de Prateleira (Shelf ROI) para eliminação de falsos positivos de celular.
     3. Cerca Virtual Poligonal com detecção de intrusão e permanência (loitering).
-    4. Verificador Inteligente por Storyboard Flash (Gemini 3.5 Flash Lite em < 2s).
+    4. Verificador Inteligente por Storyboard Flash (Gemini 3.5 Flash Lite).
     5. Cortador Automático de Evidências Forenses (Clipe MP4 7s pré/pós-ocorrência).
     6. Despachante de Alertas para Telegram Bot.
     """
@@ -127,7 +127,7 @@ class SecurityAnalyzer:
         Executa o pipeline inteligente completo:
         1. Varredura local com ByteTrack (IDs únicos), Cerca Virtual e Zonas de Prateleira.
         2. Extração instantânea de Storyboard no momento crítico.
-        3. Verificação com IA Gemini 3.5 Flash Lite em < 2 segundos.
+        3. Verificação com IA Gemini 3.5 Flash Lite sob demanda.
         4. Corte automático do clipe de evidência (7s) e despacho para o Telegram.
         """
         def update_progress(pct: float, cur: int, tot: int, msg: str):
@@ -260,7 +260,9 @@ class SecurityAnalyzer:
         # Etapa 3: Verificação com IA Gemini 3.5 (se disponível)
         if self.client and img_bytes:
             update_progress(75.0, total_frames, total_frames, "Consultando verificador analítico...")
+            t_ai_start = time.time()
             ai_result = self.storyboard_verifier.verify_with_ai(self.client, img_bytes, mode=mode)
+            ai_result.tempo_ia_segundos = round(time.time() - t_ai_start, 2)
             ai_result.storyboard_url = storyboard_rel_url
 
             # Se a IA falhou ou retornou erro, aciona o laudo de reserva do motor local
@@ -279,6 +281,7 @@ class SecurityAnalyzer:
                 )
                 local_result.erro = True
                 local_result.ia_respondeu = False
+                local_result.tempo_ia_segundos = ai_result.tempo_ia_segundos
                 local_result.erro_detalhe = ai_result.erro_detalhe or ai_result.descricao_acao
                 if not local_result.evento_detectado:
                     local_result.nivel_risco = RiskLevel.SUSPEITO
