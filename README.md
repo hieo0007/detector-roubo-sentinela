@@ -1,41 +1,32 @@
-# Sentinela CCTV AI
+# Sentinela
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Engine: Gemini 3.5](https://img.shields.io/badge/AI_Engine-Gemini_3.5_Flash_Lite-4285F4.svg)](https://deepmind.google/technologies/gemini/)
-[![Computer Vision: YOLOv8](https://img.shields.io/badge/Vision-YOLOv8_Pose_%2B_ByteTrack-00FFFF.svg)](https://docs.ultralytics.com/)
-[![Architecture: Hybrid Edge-to-Cloud](https://img.shields.io/badge/Architecture-Hybrid_Edge--to--Cloud-green.svg)](#arquitetura-do-sistema)
+Plataforma inteligente de monitoramento CFTV e prevencao de perdas com visao computacional e IA multimodal.
 
-Plataforma unificada de monitoramento e inteligencia patrimonial para sistemas de CFTV (Circuito Fechado de Televisao). O sistema implementa uma arquitetura hibrida que combina processamento local em tempo real no Edge com validacao semantica multimodal em nuvem, garantindo latencia inferior a 2 segundos e eliminacao de falsos alarmes em ambientes de varejo e instalacoes restritas.
+[Documentacao](CONTEXTO_AGENTE.md) | [Agentes de IA](AGENTS.md) | [Instalacao](#instalacao) | [Inicio Rapido](#inicio-rapido) | [Benchmarks](#benchmarks)
 
 ---
 
-## Indice
-
-- [Visao Geral](#visao-geral)
-- [Arquitetura do Sistema](#arquitetura-do-sistema)
-- [Modos Operacionais](#modos-operacionais)
-- [Benchmark de Acuracia](#benchmark-de-acuracia)
-- [Instalacao e Execucao](#instalacao-e-execucao)
-- [Referencia da API REST](#referencia-da-api-rest)
-- [Custodia Forense e Evidencias](#custodia-forense-e-evidencias)
-- [Documentacao de Engenharia](#documentacao-de-engenharia)
-- [Licenca](#licenca)
+### Menu
+[Destaques](#destaques) | [Arquitetura](#arquitetura) | [Modos de Operacao](#modos-de-operacao) | [Instalacao](#instalacao) | [Inicio Rapido](#inicio-rapido) | [Benchmarks](#benchmarks) | [API REST](#api-rest) | [Custodia Forense](#custodia-forense) | [Sobre](#sobre)
 
 ---
 
-## Visao Geral
+## Destaques
 
-Sistemas convencionais de deteccao de intrusao baseados exclusivamente em sensores de movimento ou caixas delimitadoras heuristicas sofrem com taxas elevadas de falso alarme provocadas por mudancas de iluminacao, movimentacao rotineira de funcionarios ou manipulacao legitima de produtos por clientes.
-
-O **Sentinela CCTV AI** resolve essa limitacao atraves de um pipeline hierarquico de tres estagios:
-1. **Deteccao e Rastreamento Local:** Processamento continuo a 30 FPS para deteccao de transeuntes, estimativa de articulacoes corporais e analise de zonas de interesse (cercas virtuais e gondolas).
-2. **Validacao Semantica por Storyboard:** Extracao de sequencias de quadros com amostragem temporal inteligente, comprimidas em formato JPEG de alta resolucao (~60 KB), submetidas ao modelo Gemini 3.5 Flash Lite para analise pericial de intencionalidade.
-3. **Auditoria e Despacho de Eventos:** Geracao automatizada de laudo pericial estruturado em formato JSON e corte de clipe forense codificado em padrao H.264 para reproducao instantanea.
+* **Processamento Hibrido Edge-to-Cloud:** Rastreamento local continuo a 30 FPS no Edge com validacao semantica sob demanda na nuvem.
+* **Latencia Inferior a 2 Segundos:** O modelo multimodal Gemini 3.5 Flash Lite avalia sequencias de Storyboard em ~1.7 segundos.
+* **Eliminacao de Falsos Positivos:** Distincao pericial entre clientes manuseando itens licitamente versus ocultacao premeditada em mochilas, bolsas ou vestimentas.
+* **Calibracao Espacial com o Mouse:** Interface interativa no canvas para tracao de cercas virtuais poligonais em tempo real.
+* **Custodia Forense H.264 Automatizada:** Exportacao imediata do clipe da ocorrencia (pre e pos-evento) codificado em H.264 (avc1 + faststart) compativel com navegadores.
+* **Streaming Nativo HTTP 206:** Suporte completo a Range requests para navegacao fluida e controle temporal direto no navegador.
+* **Auditoria Estruturada:** Emissao de relatorios periciais em JSON indexados com timestamp exato, nivel de risco e recomendacao imediata de seguranca.
+* **Privacidade por Design:** Nenhum video continuo e transmitido para servidores externos; apenas storyboards compactados (~60 KB) de incidentes confirmados sao analisados.
 
 ---
 
-## Arquitetura do Sistema
+## Arquitetura
+
+O sistema opera em um modelo hierarquico de 4 camadas:
 
 ```
 [ Camera CFTV / Fluxo RTSP ]
@@ -43,9 +34,8 @@ O **Sentinela CCTV AI** resolve essa limitacao atraves de um pipeline hierarquic
              v
 +-------------------------------------------------------------+
 | Nivel 1: Edge Computing Local (30 FPS)                      |
-|-------------------------------------------------------------|
 | - Deteccao de Pessoas e Objetos: YOLOv8                     |
-| - Rastreamento Temporal Contínuo: ByteTrack                 |
+| - Rastreamento Temporal Continuo: ByteTrack                 |
 | - Estimativa de Poses: YOLOv8-Pose (Membros e Articulacoes) |
 | - Analise Geometrica: Ray-Casting em Poligonos de Cerca     |
 +-------------------------------------------------------------+
@@ -54,131 +44,156 @@ O **Sentinela CCTV AI** resolve essa limitacao atraves de um pipeline hierarquic
              v
 +-------------------------------------------------------------+
 | Nivel 2: Amostragem Temporal Forense                        |
-|-------------------------------------------------------------|
 | - Extracao de 6 quadros-chave em resolucao 480x270          |
-| - Sobreposicao de metadados temporais (T=X.Xs)              |
+| - Sobreposicao de metadados temporais legiveis (T=X.Xs)     |
 | - Compactacao horizontal em imagem composta JPEG (~60 KB)   |
 +-------------------------------------------------------------+
              |
              v
 +-------------------------------------------------------------+
 | Nivel 3: Validacao Semantica Multimodal (Gemini 3.5 Nuvem)  |
-|-------------------------------------------------------------|
-| - Inferencia contextual em menos de 2.0 segundos            |
-| - Diferenciacao entre acao rotineira vs. furto premeditado  |
-| - Emissao de JSON estruturado com taxa de confianca e laudo |
+| - Inferencia contextual pericial em menos de 2.0 segundos   |
+| - Diferenciacao entre acao rotineira vs. delito patrimonial |
+| - Retorno estruturado em JSON com confianca e diretriz      |
 +-------------------------------------------------------------+
              |
              v
 +-------------------------------------------------------------+
 | Nivel 4: Central de Operacoes e Custodia                    |
-|-------------------------------------------------------------|
-| - Transcodificacao H.264 (avc1 + faststart) via FFmpeg      |
+| - Transcodificacao H.264 Baseline (avc1 + faststart)        |
 | - Streaming HTTP 206 (Range requests) no navegador          |
-| - Notificacao sonora de frequencia senoidal limpa           |
+| - Alarme auditivo sintetizado via Web Audio API             |
 +-------------------------------------------------------------+
 ```
 
 ---
 
-## Modos Operacionais
+## Modos de Operacao
 
-| Modo | Identificador | Alvo Monitorado | Criterio de Gatilho |
+| Modo | Identificador | Escopo Monitorado | Regra de Inferencia |
 |---|---|---|---|
-| **Varejo / Loja** | `LOJA` | Gondolas, prateleiras e balcoes de produtos | Remocao de item seguida de ocultacao intencional em bolsas, mochilas ou vestimentas. |
-| **Perimetro / Muro** | `PERIMETRO` | Muros, patios externos e acessos | Transgressao fisica de poligono virtual delimitado e permanencia suspeita (loitering). |
-| **Ponto de Venda** | `ASSALTO` | Estacoes de caixa e atendimento | Elevacao de membros superiores em rendicao ($y_{wrist} < y_{shoulder}$) e invasao da area restrita. |
-| **Monitoramento Geral** | `TODOS` | Planta integral | Analise convergente dos tres vetores de ameaca em paralelo. |
+| **Varejo / Loja** | `LOJA` | Gondolas, prateleiras e balcoes de mercadoria | Retirada de mercadoria seguida de ocultacao deliberada em bolsos, bolsas ou sob vestimentas. |
+| **Perimetro / Muro** | `PERIMETRO` | Portões, muros, calçadas e patios externos | Transgressao fisica de linha ou poligono virtual delimitado e permanencia suspeita (loitering). |
+| **Ponto de Venda** | `ASSALTO` | Estacoes de caixa e atendimento | Elevacao de membros em rendicao ($y_{wrist} < y_{shoulder}$) e invasao da area restrita do operador. |
+| **Monitoramento Geral** | `TODOS` | Planta integral | Varredura continua e simultanea de todos os vetores de risco. |
 
 ---
 
-## Benchmark de Acuracia
+## Instalacao
 
-Testes realizados em gravacoes reais de circuitos fechados de televisao contendo situacoes controladas de ocorrencias criticas versus rotinas regulares de comercio e circulacao:
+### Requisitos de Sistema
+* **Python:** Versao 3.10 ou superior
+* **Sistema Operacional:** Windows 10/11 ou Linux (Ubuntu 22.04 LTS / Debian 12)
+* **Credenciais:** Chave de API Google Gemini
 
-| Arquivo de Validacao | Categoria Real | Modo | Classificacao | Nivel de Risco | Confianca | Latencia Media |
-|---|---|---|---|---|:---:|:---:|
-| `furto_real_mercado_01.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 99% | 1.82s |
-| `furto_real_gondola_02.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.74s |
-| `assalto_furto_02.mp4` | Furto (Ocultacao) | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.91s |
-| `cliente_normal_compras_04.mp4` | Rotina Normal | Varejo | `NORMAL` | Normal | 95% | 1.65s |
-| `atividade_normal_balcao_05.mp4` | Rotina Normal | Varejo | `NORMAL` | Normal | 95% | 1.70s |
-| `pedestre_normal_01.mp4` | Circulacao Livre | Geral | `NORMAL` | Normal | 97% | 1.58s |
-
-- **Taxa de Verdadeiros Positivos (Sensibilidade):** 100%
-- **Taxa de Falsos Positivos em Clientes Regulares:** 0%
-- **Tempo Medio de Resposta da Analise Multimodal:** 1.73 segundos
-
----
-
-## Instalacao e Execucao
-
-### Pre-requisitos
-* Python 3.10 ou superior
-* Sistema operacional Windows 10/11 ou Linux Ubuntu 22.04+
-* Chave de API da plataforma Google Gemini
-
-### 1. Clonagem e Dependencias
+### Passo 1: Obter o Codigo e Instalar Dependencias
 ```bash
 git clone https://github.com/hieo0007/detector-roubo-sentinela.git
 cd detector-roubo-sentinela
 pip install -r requirements.txt
 ```
 
-### 2. Configuracao de Ambiente
-Copie o arquivo de exemplo e insira suas credenciais:
+### Passo 2: Configuracao
+Copie o modelo de configuracao e insira sua chave da API:
 ```bash
 cp config.example.json config.json
 ```
-No arquivo `config.json`, configure sua chave da API Gemini:
+Edite o arquivo `config.json`:
 ```json
 {
-  "gemini_api_key": "SUA_CHAVE_AQUI"
+  "camera": {
+    "source": 0,
+    "fps": 20,
+    "resolution": [1280, 720]
+  },
+  "gemini_api_key": "SUA_CHAVE_GEMINI_AQUI"
 }
 ```
 
-### 3. Inicializacao do Servidor
-No Windows, execute o inicializador automatizado:
+---
+
+## Inicio Rapido
+
+### No Windows:
+Basta executar o script automatizado com duplo clique:
 ```cmd
 iniciar_aplicativo.bat
 ```
-Ou inicie diretamente via interpretador Python:
+
+### Via Linha de Comando (Windows / Linux):
 ```bash
 python -m src.app
 ```
-Acesse o painel de operacao em: **`http://127.0.0.1:5000`**
+
+O painel de monitoramento ficara acessivel imediatamente em:
+**`http://127.0.0.1:5000`**
+
+### Execucao Programatica (Headless):
+```python
+from src.analyzer import SecurityAnalyzer
+from src.models import SecurityMode
+
+analyzer = SecurityAnalyzer()
+resultado = analyzer.analyze_clip("videos_teste/furto_real_mercado_01.mp4", mode=SecurityMode.SHOPLIFTING)
+
+print("Status:", resultado.tipo_evento.value)
+print("Confianca:", resultado.confianca)
+print("Laudo:", resultado.descricao_acao)
+```
 
 ---
 
-## Referencia da API REST
+## Benchmarks
 
-| Metodo | Endpoint | Descricao |
+Avaliacao de acuracia executada contra banco de dados pericial contendo gravacoes reais de ocorrencias criticas versus circulacao cotidiana de clientes:
+
+| Gravacao de Teste | Cenario Real | Modo | Diagnostico IA | Risco | Confianca | Tempo |
+|---|---|---|---|---|:---:|:---:|
+| `furto_real_mercado_01.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 99% | 1.82s |
+| `furto_real_gondola_02.mp4` | Furto Real | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.74s |
+| `assalto_furto_02.mp4` | Furto em Mochila | Varejo | `FURTO_LOJA` | Alerta Maximo | 98% | 1.91s |
+| `cliente_normal_compras_04.mp4` | Compra Regular | Varejo | `NORMAL` | Normal | 95% | 1.65s |
+| `atividade_normal_balcao_05.mp4` | Trabalho em Balcao | Varejo | `NORMAL` | Normal | 95% | 1.70s |
+| `pedestre_normal_01.mp4` | Transito em Calcada | Geral | `NORMAL` | Normal | 97% | 1.58s |
+
+* **Sensibilidade (True Positive Rate):** 100%
+* **Taxa de Falsos Positivos em Compras Normais:** 0%
+* **Tempo Medio de Resposta da Analise Multimodal:** 1.73s
+
+---
+
+## API REST
+
+| Metodo | Rota | Funcao |
 |---|---|---|
-| `GET` | `/video_feed` | Fluxo de video continuo com telemetria visual anotada via MJPEG. |
-| `POST` | `/api/analyze` | Dispara o pipeline de processamento e verificacao semantica sobre um video. |
-| `GET` | `/api/progress/<task_id>` | Consulta o status percentual e a etapa do processamento em andamento. |
-| `GET` | `/api/fence` | Recupera as coordenadas atuais do poligono da cerca virtual. |
-| `POST` | `/api/fence` | Atualiza os vertices da cerca desenhada interativamente pelo operador. |
-| `GET` | `/videos/<filename>` | Servico de entrega de video com suporte a Range HTTP 206 (seek e scrubbing). |
+| `GET` | `/video_feed` | Fluxo de video continuo com telemetria visual anotada via MJPEG |
+| `POST` | `/api/analyze` | Inicia o processamento analitico sobre arquivo de video selecionado |
+| `GET` | `/api/progress/<task_id>` | Retorna status percentual e etapa do processamento em execucao |
+| `GET` | `/api/test-videos` | Catalogo de videos de validacao indexados no servidor |
+| `GET` | `/api/fence` | Retorna as coordenadas vetoriais atuais da cerca perimetral |
+| `POST` | `/api/fence` | Define novo poligono de cerca desenhado interativamente |
+| `GET` | `/videos/<filename>` | Servico de video com suporte a Range requests (HTTP 206) |
 
 ---
 
-## Custodia Forense e Evidencias
+## Custodia Forense
 
-Quando uma ocorrencia e confirmada pela analise semantica:
-1. O sistema isola a janela temporal relevante (3 segundos antes e 4 segundos depois do marco critico).
-2. Codifica um arquivo de video independente no diretorio `evidencias/` no perfil H.264 Baseline, `pix_fmt yuv420p` com flag `+faststart`.
-3. Gera um laudo em formato JSON correspondente contendo segundo exato, nivel de risco, lista de objetos envolvidos e diretriz recomendada de seguranca.
-
----
-
-## Documentacao de Engenharia
-
-Para desenvolvedores e agentes autônomos que forem estender o projeto, consulte a especificacao técnica detalhada em:
-* **[`CONTEXTO_AGENTE.md`](CONTEXTO_AGENTE.md)**: Handoff de engenharia, arquitetura de modulos e mapeamento completo de classes.
+Apos a confirmacao de uma ocorrencia:
+1. **Isolamento de Janela Temporal:** O sistema recorta automaticamente o intervalo de 3 segundos anteriores e 4 segundos posteriores ao evento critico.
+2. **Transcodificacao Automatizada:** O trecho e codificado em H.264 Baseline (`libx264`, `pix_fmt yuv420p`, `-movflags +faststart`).
+3. **Geracao de Laudo JSON:** Registro pericial estruturado e salvo em disco com hash de integridade e metadados forenses.
 
 ---
 
-## Licenca
+## Documentacao para Agentes e Desenvolvedores
 
-Distribuido sob a licenca MIT. Consulte o arquivo [`LICENSE`](LICENSE) para maiores informacoes.
+Para agentes autonomos de IA (Claude Code, Cursor, Codex) e engenheiros de software:
+* **[`AGENTS.md`](AGENTS.md)** / **[`CONTEXTO_AGENTE.md`](CONTEXTO_AGENTE.md)**: Especificacao completa da arquitetura interna, fluxo de estados, mapa de modulos e convencoes de codigo.
+
+---
+
+## Sobre
+
+O Sentinela foi concebido como uma solucao de codigo aberto voltada para reducao de perdas no comercio varejista e protecao patrimonial perimetral, aliando velocidade computacional local a capacidade de compreensao contextual dos modelos fundacionais modernos.
+
+Distribuido sob a licenca MIT. Consulte [`LICENSE`](LICENSE) para termos de uso.
