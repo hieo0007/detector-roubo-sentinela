@@ -12,3 +12,6 @@ evidencias/
 snapshots/
 config.json
 *.pt
+
+temp_frames/
+scratch/
