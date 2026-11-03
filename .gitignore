@@ -15,3 +15,4 @@ config.json
 
 temp_frames/
 scratch/
+.pytest_cache/

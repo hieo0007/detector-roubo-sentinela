@@ -811,7 +811,23 @@
         errBadge.innerText = "IA OFFLINE [MOTOR LOCAL]";
         itemsContainer.prepend(errBadge);
       }
-      if (report.nivel_risco === "ALERTA_MAXIMO" || report.evento_detectado) {
+      if (report.erro || report.tipo_evento === "ERRO_ANALISE") {
+        diagCard.className = "bg-zinc-900/60 border border-amber-800/80 rounded-xl p-5";
+        badgeRisk.className = "px-2.5 py-0.5 rounded text-[10px] font-mono-data uppercase bg-amber-950/80 text-amber-300 border border-amber-800 font-medium";
+        badgeRisk.innerText = report.evento_detectado ? "FALHA NA IA (ALERTA LOCAL)" : "FALHA NA IA";
+        title.innerText = "IA não respondeu. Laudo do motor local, revise o vídeo manualmente.";
+        title.className = "text-base font-semibold text-amber-200";
+
+        if (report.evento_detectado) {
+          screenBadge.classList.remove("hidden");
+          screenText.innerText = "FALHA NA IA (ALERTA LOCAL)";
+          playSoftChime(true);
+        } else {
+          screenBadge.classList.add("hidden");
+          playSoftChime(false);
+        }
+
+      } else if (report.nivel_risco === "ALERTA_MAXIMO" || report.evento_detectado) {
         diagCard.className = "bg-zinc-900/90 border border-zinc-700 rounded-xl p-5";
         badgeRisk.className = "px-2.5 py-0.5 rounded text-[10px] font-mono-data uppercase bg-zinc-800 text-zinc-200 border border-zinc-600 font-medium";
 
@@ -839,14 +855,6 @@
 
         playSoftChime(false);
 
-      } else if (report.tipo_evento === "ERRO_ANALISE") {
-        diagCard.className = "bg-zinc-900/60 border border-amber-800/80 rounded-xl p-5";
-        badgeRisk.className = "px-2.5 py-0.5 rounded text-[10px] font-mono-data uppercase bg-amber-950/80 text-amber-300 border border-amber-800 font-medium";
-        badgeRisk.innerText = "FALHA NA IA";
-        title.innerText = "Falha de Comunicacao com a IA";
-        title.className = "text-base font-semibold text-amber-200";
-        screenBadge.classList.add("hidden");
-        playSoftChime(false);
       } else {
         diagCard.className = "bg-zinc-900/60 border border-zinc-800/80 rounded-xl p-5";
         badgeRisk.className = "px-2.5 py-0.5 rounded text-[10px] font-mono-data uppercase bg-zinc-950 text-zinc-400 border border-zinc-800 font-medium";

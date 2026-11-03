@@ -65,6 +65,7 @@ class SecurityAnalysisResult(BaseModel):
         description="Itens, bolsas, armas ou vestimentas envolvidos na conduta."
     )
     recomendacao_acao: str = Field(
+        default="Revisar monitoramento.",
         description="Ação prática recomendada para o proprietário ou equipe de segurança."
     )
     storyboard_url: Optional[str] = Field(

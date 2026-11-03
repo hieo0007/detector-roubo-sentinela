@@ -280,6 +280,9 @@ class SecurityAnalyzer:
                 local_result.erro = True
                 local_result.ia_respondeu = False
                 local_result.erro_detalhe = ai_result.erro_detalhe or ai_result.descricao_acao
+                if not local_result.evento_detectado:
+                    local_result.nivel_risco = RiskLevel.SUSPEITO
+                    local_result.confianca = 0.0
                 local_result.descricao_acao = f"[AVISO: Falha na IA - Laudo local de contingencia] {local_result.descricao_acao}"
                 final_result = self._finalize_result(local_result, video_path, sb_path)
                 update_progress(100.0, total_frames, total_frames, "Concluido com laudo local de contingencia.")
@@ -366,16 +369,17 @@ class SecurityAnalyzer:
     ) -> SecurityAnalysisResult:
         is_breach = False
         event_type = EventType.NORMAL
-        risk = RiskLevel.NORMAL
-        conf = 85.0
+        risk = RiskLevel.SUSPEITO
+        conf = 0.0
         sec = 0.0
-        desc = "Ambiente monitorado sem anomalias críticas detectadas pelo motor local."
-        recom = "Manter monitoramento rotineiro ativo."
+        desc = "Nenhuma anomalia crítica detectada pelo motor local de contingência. Recomenda-se revisão manual."
+        recom = "Revisar o vídeo manualmente devido à ausência de confirmação pela IA."
 
         if mode in [SecurityMode.ALL, SecurityMode.ROBBERY] and len(surrender_events) >= 2:
             is_breach = True
             event_type = EventType.ASSALTO_RENDICAO
             risk = RiskLevel.ALERTA_MAXIMO
+            conf = 85.0
             sec = surrender_events[0]
             desc = "Rendição identificada: Indivíduo com mãos elevadas acima dos ombros de forma continuada."
             recom = "Acionar alarme silencioso e polícia imediatamente."
@@ -383,6 +387,7 @@ class SecurityAnalyzer:
             is_breach = True
             event_type = EventType.INVASAO_PERIMETRO
             risk = RiskLevel.ALERTA_MAXIMO
+            conf = 85.0
             sec = intrusion_events[0]
             desc = "Violação de Perímetro: Indivíduo cruzou a cerca virtual restrita."
             recom = "Verificar o setor invadido e acionar refletores/sirene perimetral."
@@ -390,6 +395,7 @@ class SecurityAnalyzer:
             is_breach = True
             event_type = EventType.FURTO_LOJA
             risk = RiskLevel.ALERTA_MAXIMO
+            conf = 85.0
             sec = shoplifting_events[0]
             desc = "Subtração detectada: Mão interagiu com prateleira de produtos e ocultou item em roupas/bolso."
             recom = "Acionar fiscal de salão para monitoramento do indivíduo."
